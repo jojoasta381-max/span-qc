@@ -4,13 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "dev:core": "cd spanqc_core && python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload",
-    "dev:all": "bash -c 'trap \"kill 0\" EXIT; npm run dev:core & npm run dev'",
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "DATABASE_URL=\"file:./test.db?connection_limit=1&socket_timeout=30\" tsx tests/auth-security.test.ts",
+    "test": "DATABASE_URL=\"file:./test.db\" tsx tests/auth-security.test.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:push": "prisma db push"
   },
@@ -19,7 +17,6 @@
     "@tanstack/react-query": "^5.66.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.7",
-    "google-auth-library": "^10.9.1",
     "gsap": "^3.15.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
@@ -34,7 +31,6 @@
     "@types/react-dom": "^19.0.0",
     "postcss": "^8.5.2",
     "prisma": "^6.19.3",
-    "puppeteer-core": "^24.43.1",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.23.15",
     "typescript": "^5.7.0"

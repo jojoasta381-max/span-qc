@@ -23,10 +23,6 @@ model Tenant {
   sessions    Session[]
   qcJobs      QCJob[]
   qcJobReviews QCJobReview[]
-  orders      Order[]
-  payments    Payment[]
-  entitlementLedgers EntitlementLedger[]
-  usageLedgers UsageLedger[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -37,21 +33,18 @@ model Tenant {
 // 2. USERS & ROLES
 // -------------------------------------------------------------
 model User {
-  id                  String    @id @default(uuid())
-  email               String    @unique
-  name                String
-  passwordHash        String
-  googleId            String?   @unique
-  isGoogleAuthEnabled Boolean   @default(true)
-  status              String    @default("ACTIVE") // ACTIVE, INVITED, SUSPENDED
-  role                String    @default("ENGINEER") // ADMIN, ENGINEER, REVIEWER
-  tenantId            String
-  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  sessions            Session[]
-  qcJobReviews        QCJobReview[]
-  orders              Order[]
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  status       String    @default("ACTIVE") // ACTIVE, INVITED, SUSPENDED
+  role         String    @default("ENGINEER") // ADMIN, ENGINEER, REVIEWER
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessions     Session[]
+  qcJobReviews QCJobReview[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([tenantId])
   @@map("users")
@@ -130,7 +123,6 @@ model QCJob {
   claimedAt           DateTime?
   quotaRefunded       Boolean   @default(false)
   reviews             QCJobReview[]
-  usageLedgers        UsageLedger[]
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -168,120 +160,4 @@ model QCJobReview {
   @@index([reviewerId])
   @@index([jobId, createdAt])
   @@map("qc_job_reviews")
-}
-
-// -------------------------------------------------------------
-// 7. INTERNAL BILLING ORDERS (TENANT-SCOPED)
-// -------------------------------------------------------------
-model Order {
-  id                  String              @id @default(uuid())
-  tenantId            String
-  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId              String
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId              String
-  amountPaise         Int                 // Amount in minor currency units (paise)
-  currency            String              @default("INR")
-  checksIncluded      Int
-  providerOrderId     String?             @unique // e.g. order_xxxxxxxx from Razorpay
-  idempotencyKey      String?
-  status              String              @default("CREATED") // CREATED, PROVIDER_PENDING, PAID, FAILED, CANCELLED, EXPIRED
-  metadata            String?             // JSON metadata
-  payments            Payment[]
-  entitlements        EntitlementLedger[]
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-
-  @@unique([tenantId, idempotencyKey])
-  @@index([tenantId])
-  @@index([status])
-  @@index([providerOrderId])
-  @@map("orders")
-}
-
-// -------------------------------------------------------------
-// 8. PAYMENT ATTEMPTS & TRANSACTION STATUS
-// -------------------------------------------------------------
-model Payment {
-  id                  String              @id @default(uuid())
-  orderId             String
-  order               Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  tenantId            String
-  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  providerPaymentId   String?             @unique // e.g. pay_xxxxxxxx from Razorpay
-  amountPaise         Int
-  currency            String              @default("INR")
-  status              String              @default("CREATED") // CREATED, AUTHORIZED, CAPTURED, FAILED, REFUNDED
-  paymentMethod       String?             // card, upi, netbanking
-  errorMessage        String?
-  capturedAt          DateTime?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-
-  @@index([tenantId])
-  @@index([orderId])
-  @@index([status])
-  @@index([providerPaymentId])
-  @@map("payments")
-}
-
-// -------------------------------------------------------------
-// 9. DURABLE WEBHOOK INBOX (IDEMPOTENT & AUDITABLE)
-// -------------------------------------------------------------
-model WebhookInbox {
-  id                  String              @id @default(uuid())
-  providerEventId     String              @unique // Unique Razorpay Event ID (x-razorpay-event-id or event.id)
-  eventType           String              // payment.captured, payment.failed, order.paid, etc.
-  status              String              @default("RECEIVED") // RECEIVED, PROCESSING, PROCESSED, FAILED
-  payload             String              // Verbatim JSON payload
-  errorMessage        String?
-  processedAt         DateTime?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-
-  @@index([providerEventId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("webhook_inbox")
-}
-
-// -------------------------------------------------------------
-// 10. ENTITLEMENT LEDGER (CREDIT ALLOCATIONS)
-// -------------------------------------------------------------
-model EntitlementLedger {
-  id                  String              @id @default(uuid())
-  tenantId            String
-  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  orderId             String?
-  order               Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  creditQuantity      Int                 // Number of checks granted
-  reason              String              // PLAN_PURCHASE, BONUS, RECONCILIATION
-  effectiveFrom       DateTime            @default(now())
-  expiresAt           DateTime?
-  createdAt           DateTime            @default(now())
-
-  @@index([tenantId])
-  @@index([orderId])
-  @@map("entitlement_ledgers")
-}
-
-// -------------------------------------------------------------
-// 11. USAGE LEDGER (TENANT & QC JOB DEDUCTIONS)
-// -------------------------------------------------------------
-model UsageLedger {
-  id                  String              @id @default(uuid())
-  tenantId            String
-  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  jobId               String
-  job                 QCJob               @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  status              String              @default("RESERVED") // RESERVED, COMMITTED, RELEASED
-  amount              Int                 @default(1)
-  reason              String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-
-  @@unique([tenantId, jobId])
-  @@index([tenantId])
-  @@index([status])
-  @@map("usage_ledgers")
 }

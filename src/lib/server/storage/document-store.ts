@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const MAX_DOCUMENT_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
+export const MAX_DOCUMENT_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 export class StorageSecurityError extends Error {
   constructor(message: string) {

@@ -206,16 +206,3 @@ export function extractRequestAuth(request: Request | { headers: Headers; cookie
 
   return { token: null, authType: null };
 }
-
-/**
- * Determines whether the session cookie should have the Secure flag.
- * True only when served over HTTPS / TLS proxy.
- * Must be false when accessing over plain HTTP (e.g. direct EC2 IP),
- * otherwise browsers reject and drop the cookie per RFC 6265.
- */
-export function isRequestSecure(request: Request): boolean {
-  const proto = request.headers.get("x-forwarded-proto");
-  if (proto === "https") return true;
-  if (proto === "http") return false;
-  return request.url.startsWith("https://");
-}

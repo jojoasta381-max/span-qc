@@ -17,7 +17,6 @@ export function getTrustedHosts(): Set<string> {
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.CANONICAL_ORIGIN,
     process.env.ALLOWED_ORIGINS,
-    process.env.NEXTAUTH_URL,
   ];
 
   for (const src of configSources) {
@@ -68,12 +67,11 @@ export function validateOrigin(request: Request): boolean {
   const trustedHosts = getTrustedHosts();
 
   // Determine local request host from request URL or Host header
-  const hostHeader = (request.headers.get("host") || "").toLowerCase().trim();
   let localRequestHost = "";
   try {
     localRequestHost = new URL(request.url).host.toLowerCase();
   } catch {
-    localRequestHost = hostHeader;
+    localRequestHost = (request.headers.get("host") || "").toLowerCase();
   }
 
   // Trusted proxy policy:
@@ -103,12 +101,11 @@ export function validateOrigin(request: Request): boolean {
       return true;
     }
 
-    // B. Check against local request host or Host header (same-origin requests)
-    if (
-      (localRequestHost && originHost === localRequestHost) ||
-      (hostHeader && originHost === hostHeader)
-    ) {
-      return true;
+    // B. Check against local request host (for direct local connections or local dev)
+    if (localRequestHost && originHost === localRequestHost) {
+      if (process.env.NODE_ENV !== "production" || trustedHosts.has(localRequestHost)) {
+        return true;
+      }
     }
 
     // C. Trusted proxy check: if forwardedHost matches origin AND is in trustedHosts
@@ -134,11 +131,10 @@ export function validateOrigin(request: Request): boolean {
       return true;
     }
 
-    if (
-      (localRequestHost && refererHost === localRequestHost) ||
-      (hostHeader && refererHost === hostHeader)
-    ) {
-      return true;
+    if (localRequestHost && refererHost === localRequestHost) {
+      if (process.env.NODE_ENV !== "production" || trustedHosts.has(localRequestHost)) {
+        return true;
+      }
     }
 
     if (trustProxy && forwardedHost && refererHost === forwardedHost && trustedHosts.has(forwardedHost)) {

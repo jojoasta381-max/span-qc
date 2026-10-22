@@ -16,8 +16,6 @@ export interface User {
   full_name: string;
   role: UserRole;
   is_active: boolean;
-  is_google_auth_enabled?: boolean;
-  has_google_linked?: boolean;
   created_at: string;
   organization_id?: string;
 }

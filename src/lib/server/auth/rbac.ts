@@ -13,9 +13,7 @@ export type Permission =
   | "team:manage"
   | "organization:manage"
   | "qc:execute"
-  | "qc:review"
-  | "billing:view"
-  | "billing:manage";
+  | "qc:review";
 
 export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   ADMIN: [
@@ -27,20 +25,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     "organization:manage",
     "qc:execute",
     "qc:review",
-    "billing:view",
-    "billing:manage",
   ],
   ENGINEER: [
     "projects:create",
     "projects:read",
     "projects:update",
     "qc:execute",
-    "billing:view",
+    "projects:read",
   ],
   REVIEWER: [
     "projects:read",
     "qc:review",
-    "billing:view",
   ],
 } as const;
 

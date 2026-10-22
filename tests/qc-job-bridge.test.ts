@@ -259,16 +259,6 @@ async function runQCBridgeTestSuite() {
       }
     }
     assert(oversizedValidationFailed, "Oversized file (>25MB) rejected with HTTP 413");
-
-    // Valid ZIP upload recognized
-    const sampleZipHeader = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00]);
-    const zipValidation = validateUploadFile(sampleZipHeader, "schematic_bundle.zip");
-    assert(zipValidation.format === "zip", "ZIP format recognized via magic bytes");
-
-    // Valid SVG upload recognized
-    const sampleSvgHeader = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>');
-    const svgValidation = validateUploadFile(sampleSvgHeader, "wiring_diagram.svg");
-    assert(svgValidation.format === "svg", "SVG format recognized");
   }
 
   // ----------------------------------------------------------------------------

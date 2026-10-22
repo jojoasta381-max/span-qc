@@ -7,7 +7,7 @@ import path from "node:path";
 
 // 2. Enforce dedicated test database URL (never dev.db)
 if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("dev.db")) {
-  process.env.DATABASE_URL = "file:./test.db?connection_limit=1&socket_timeout=30";
+  process.env.DATABASE_URL = "file:./test.db";
 }
 
 // 3. Fallback secret for test run if not configured

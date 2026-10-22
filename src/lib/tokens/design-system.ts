@@ -122,8 +122,8 @@ export const TOKENS = {
     },
   },
   typography: {
-    fontSans: '"Pixelify Sans", system-ui, -apple-system, sans-serif',
-    fontMono: '"Pixelify Sans", monospace',
+    fontSans: '"Geist", "Inter", system-ui, -apple-system, sans-serif',
+    fontMono: '"JetBrains Mono", "SF Mono", Consolas, Menlo, monospace',
     scale: {
       display: "clamp(2.5rem, 5vw, 4.5rem)",
       h1: "clamp(2rem, 3.5vw, 3rem)",

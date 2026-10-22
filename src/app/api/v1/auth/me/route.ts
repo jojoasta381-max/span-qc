@@ -38,8 +38,6 @@ export async function GET(request: Request) {
     role: session.user.role,
     tenant_id: session.tenantId,
     is_active: session.user.status === "ACTIVE",
-    is_google_auth_enabled: session.user.isGoogleAuthEnabled,
-    has_google_linked: Boolean(session.user.googleId),
     created_at: session.user.createdAt.toISOString(),
   });
 }

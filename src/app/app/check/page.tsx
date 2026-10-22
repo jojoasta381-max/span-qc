@@ -53,27 +53,8 @@ export default function CheckWorkflowPage() {
     sampleKey?: "wh402" | "mcc" | "tb200";
   } | null>(null);
 
-  const [selectedProject, setSelectedProject] = useState("");
-  const [tenantProjects, setTenantProjects] = useState<{ id: string; name: string; customer?: string }[]>([]);
+  const [selectedProject, setSelectedProject] = useState(INITIAL_PROJECTS[0].id);
   const [selectedStandard, setSelectedStandard] = useState(SAMPLE_STANDARDS[0].code);
-
-  React.useEffect(() => {
-    fetch("/api/v1/projects")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: any[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setTenantProjects(data);
-          setSelectedProject((prev) => (prev && data.some((p: any) => p.id === prev) ? prev : data[0].id));
-        }
-      })
-      .catch((err) => console.warn("Failed to load tenant projects:", err));
-  }, []);
-
-  // Reference Netlist input (wire_no, colour, size_mm2, source, destination)
-  const [expectedNetlistJson, setExpectedNetlistJson] = useState("");
-  const [specificationIsComplete, setSpecificationIsComplete] = useState(false);
-  const [promptVersion, setPromptVersion] = useState<"extract_v1" | "extract_v2">("extract_v1");
-  const [showNetlistEditor, setShowNetlistEditor] = useState(false);
 
   // Document viewer controls
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -118,25 +99,16 @@ export default function CheckWorkflowPage() {
     }
 
     // 3. Check MIME type / extension
-    const lowerName = file.name.toLowerCase();
-    const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
-    const isZip =
-      file.type === "application/zip" ||
-      file.type === "application/x-zip-compressed" ||
-      lowerName.endsWith(".zip");
-    const isSvg =
-      file.type === "image/svg+xml" ||
-      lowerName.endsWith(".svg");
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
     const isImage =
       file.type.startsWith("image/") ||
-      lowerName.endsWith(".png") ||
-      lowerName.endsWith(".jpg") ||
-      lowerName.endsWith(".jpeg") ||
-      isSvg;
+      file.name.toLowerCase().endsWith(".png") ||
+      file.name.toLowerCase().endsWith(".jpg") ||
+      file.name.toLowerCase().endsWith(".jpeg");
 
-    if (!isPdf && !isImage && !isZip) {
+    if (!isPdf && !isImage) {
       setUploadError(
-        `Unsupported File Format: "${file.name}". SpanQC accepts wiring schematics in ZIP, PDF, PNG, JPG, JPEG, or SVG format.`
+        `Unsupported File Format: "${file.name}". SpanQC accepts wiring schematics in PDF, PNG, JPG, or JPEG format.`
       );
       return;
     }
@@ -156,8 +128,8 @@ export default function CheckWorkflowPage() {
     setFileData({
       name: file.name,
       size: formatBytes(file.size),
-      pages: isImage ? 1 : isZip ? 1 : Math.max(1, Math.min(16, Math.round(file.size / (200 * 1024)))),
-      mime: file.type || (isPdf ? "application/pdf" : isZip ? "application/zip" : isSvg ? "image/svg+xml" : "image/png"),
+      pages: isImage ? 1 : Math.max(1, Math.min(16, Math.round(file.size / (200 * 1024)))),
+      mime: file.type || (isPdf ? "application/pdf" : "image/png"),
       hash: hash,
     });
     setStep("PREVIEW");
@@ -204,105 +176,44 @@ export default function CheckWorkflowPage() {
     setStep("PREVIEW");
   };
 
-  // Start Real Processing Pipeline wired to Python QC Service queue
-  const handleStartQC = async () => {
+  // Start Real Processing Pipeline with Timeout & Error Guards
+  const handleStartQC = () => {
     setProcessingError(null);
     setStep("PROCESSING");
     setProcessingStage(0);
 
-    let fileToUpload: File | Blob | null = rawFile;
-
-    // If sample was selected, fetch it as Blob
-    if (!fileToUpload && fileData?.sampleKey) {
-      try {
-        const sampleUrl = fileData.sampleKey === "wh402" ? "/frames/frame_001.webp" : "/frames/frame_020.webp";
-        const sampleRes = await fetch(sampleUrl);
-        fileToUpload = await sampleRes.blob();
-      } catch (err) {
-        console.warn("Failed to fetch sample file as blob", err);
-      }
-    }
-
-    if (!fileToUpload) {
-      setProcessingError("No schematic file available to upload.");
-      setStep("PREVIEW");
-      return;
-    }
-
-    try {
-      const activeProjectId =
-        tenantProjects.length > 0
-          ? tenantProjects.some((p) => p.id === selectedProject)
-            ? selectedProject
-            : tenantProjects[0].id
-          : selectedProject || "default";
-
-      const formData = new FormData();
-      formData.append("file", fileToUpload, fileData?.name || "schematic.pdf");
-      formData.append("projectId", activeProjectId);
-      formData.append("standard", selectedStandard);
-      if (expectedNetlistJson.trim()) {
-        formData.append("expectedNetlistJson", expectedNetlistJson.trim());
-      }
-      formData.append("specificationIsComplete", String(specificationIsComplete));
-      formData.append("promptVersion", promptVersion);
-      formData.append("autoDispatch", "true");
-
-      const response = await fetch("/api/v1/qc/jobs", {
-        method: "POST",
-        body: formData,
+    const interval = setInterval(() => {
+      setProcessingStage((prev) => {
+        if (prev < processingStages.length - 1) {
+          return prev + 1;
+        } else {
+          clearInterval(interval);
+          setTimeout(async () => {
+            try {
+              if (rawFile) {
+                // Dynamically create real report from uploaded file!
+                const { reportId } = await createReportFromUploadedFile(
+                  rawFile,
+                  selectedProject,
+                  selectedStandard
+                );
+                router.push(`/app/reports/${reportId}`);
+              } else if (fileData?.sampleKey === "mcc") {
+                router.push("/app/reports/run-mcc01");
+              } else if (fileData?.sampleKey === "tb200") {
+                router.push("/app/reports/run-tb200");
+              } else {
+                router.push("/app/reports/run-wh402");
+              }
+            } catch (err) {
+              console.error("Report generation failed", err);
+              setProcessingError("Processing timeout: unable to finalize QC graph. Please retry.");
+            }
+          }, 800);
+          return prev;
+        }
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to create QC job in queue.");
-      }
-
-      const jobId = data.job_id;
-      setProcessingStage(1);
-
-      // Real status polling
-      let pollCount = 0;
-      const pollInterval = setInterval(async () => {
-        pollCount++;
-        try {
-          const jobRes = await fetch(`/api/v1/qc/jobs/${jobId}`);
-          const jobData = await jobRes.json();
-
-          if (jobData.status === "QUEUED") {
-            setProcessingStage(1);
-          } else if (jobData.status === "PROCESSING" || jobData.status === "EXTRACTING") {
-            // Smoothly advance stage while processing
-            const stage = Math.min(4, Math.max(2, Math.floor(pollCount / 3) + 2));
-            setProcessingStage(stage);
-          } else if (jobData.status === "ANALYZING") {
-            setProcessingStage(3);
-          } else if (jobData.status === "VALIDATING") {
-            setProcessingStage(4);
-          } else if (jobData.status === "COMPLETED" || jobData.status === "REVIEW_REQUIRED") {
-            clearInterval(pollInterval);
-            setProcessingStage(5);
-            setTimeout(() => {
-              router.push(`/app/reports/${jobId}`);
-            }, 600);
-          } else if (jobData.status === "FAILED") {
-            clearInterval(pollInterval);
-            setProcessingError(jobData.error_message || "QC processing failed on server.");
-          }
-        } catch (pollErr) {
-          console.error("Poll error", pollErr);
-        }
-
-        if (pollCount > 240) {
-          clearInterval(pollInterval);
-          setProcessingError("QC Job timed out waiting for worker response.");
-        }
-      }, 1500);
-
-    } catch (err: any) {
-      console.error("[QC_RUN_ERROR]", err);
-      setProcessingError(err.message || "Failed to dispatch QC job to worker queue.");
-    }
+    }, 1100);
   };
 
   return (
@@ -369,7 +280,7 @@ export default function CheckWorkflowPage() {
           <div className="p-10 rounded-2xl border-2 border-dashed border-[#222e47] hover:border-cyan-400 bg-[#0c101a] transition-all text-center relative group shadow-2xl shadow-black/40 hover:shadow-cyan-500/5">
             <input
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.svg,.zip"
+              accept=".pdf,.png,.jpg,.jpeg"
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
@@ -380,10 +291,10 @@ export default function CheckWorkflowPage() {
               Upload a wiring diagram manual
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto mb-4">
-              Drag and drop your engineering schematic document or ZIP package here, or click to browse files.
+              Drag and drop your engineering schematic document here, or click to browse files.
             </p>
             <div className="inline-flex items-center gap-4 text-[11px] font-mono text-slate-400 bg-[#111726] px-4 py-2 rounded-xl border border-[#1b253b]">
-              <span>SUPPORTED: ZIP, PDF, PNG, JPG, SVG</span>
+              <span>SUPPORTED: PDF, PNG, JPG, JPEG</span>
               <span>•</span>
               <span>MAX SIZE: 100MB</span>
               <span>•</span>
@@ -654,21 +565,11 @@ export default function CheckWorkflowPage() {
                 label="Target Project"
                 value={selectedProject}
                 onChange={(e) => setSelectedProject(e.target.value)}
-                options={
-                  tenantProjects.length > 0
-                    ? tenantProjects.map((p) => ({
-                        value: p.id,
-                        label: p.name,
-                        subtext: p.customer || undefined,
-                      }))
-                    : [
-                        {
-                          value: "default",
-                          label: "General Inspection Project",
-                          subtext: "Default active project",
-                        },
-                      ]
-                }
+                options={INITIAL_PROJECTS.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                  subtext: p.customer || undefined,
+                }))}
               />
 
               {/* Standard to Validate Against */}
@@ -682,80 +583,6 @@ export default function CheckWorkflowPage() {
                   subtext: `${s.rule_count} rules`,
                 }))}
               />
-
-              {/* Extraction Prompt Version */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 block">
-                  AI Model & Prompt Version
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPromptVersion("extract_v1")}
-                    className={`py-2 px-3 rounded-lg text-xs font-mono transition-all border ${
-                      promptVersion === "extract_v1"
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
-                        : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white"
-                    }`}
-                  >
-                    extract_v1 (Standard)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPromptVersion("extract_v2")}
-                    className={`py-2 px-3 rounded-lg text-xs font-mono transition-all border ${
-                      promptVersion === "extract_v2"
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
-                        : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white"
-                    }`}
-                  >
-                    extract_v2 (+Rule 8)
-                  </button>
-                </div>
-              </div>
-
-              {/* Reference Netlist (wire_no, colour, size_mm2, source, destination) */}
-              <div className="pt-2 border-t border-slate-800">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-slate-300">
-                    Reference Netlist (Optional)
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowNetlistEditor(!showNetlistEditor)}
-                    className="text-xs text-cyan-400 hover:underline font-mono"
-                  >
-                    {showNetlistEditor ? "Hide Editor ▲" : "Configure JSON ▼"}
-                  </button>
-                </div>
-
-                {showNetlistEditor && (
-                  <div className="space-y-3 p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
-                    <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
-                      Expected format: <br />
-                      <code className="text-cyan-300 text-[10px]">
-                        [{`{"wire_no":"122A","colour":"WH","size_mm2":1.5,"source":"CFB1","destination":"CN-36"}`}]
-                      </code>
-                    </p>
-                    <textarea
-                      rows={5}
-                      value={expectedNetlistJson}
-                      onChange={(e) => setExpectedNetlistJson(e.target.value)}
-                      placeholder='[&#10;  {"wire_no": "122A", "colour": "WH", "size_mm2": 1.5, "source": "CFB1", "destination": "CN-36"}&#10;]'
-                      className="w-full p-2.5 rounded-lg bg-black/60 border border-slate-800 font-mono text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
-                    />
-                    <label className="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer pt-1">
-                      <input
-                        type="checkbox"
-                        checked={specificationIsComplete}
-                        onChange={(e) => setSpecificationIsComplete(e.target.checked)}
-                        className="rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-0"
-                      />
-                      <span>Specification is declared 100% complete (extra wires fail QC)</span>
-                    </label>
-                  </div>
-                )}
-              </div>
 
               <div className="pt-2 space-y-2">
                 <Button

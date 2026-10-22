@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { verifyPassword } from "@/lib/server/auth/passwords";
-import { createServerSession, isRequestSecure, SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS } from "@/lib/server/auth/session";
+import { createServerSession, SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS } from "@/lib/server/auth/session";
 
 export async function POST(request: Request) {
   try {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       name: SESSION_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: isRequestSecure(request),
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_DURATION_SECONDS,

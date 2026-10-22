@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/context/auth-context";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Rocket, Mail, Lock, User, Building, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function SignupPage() {
@@ -72,21 +71,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <div className="p-8 rounded-3xl bg-[#0c101a] border border-[#1b253b] shadow-2xl shadow-black/80 space-y-5">
-          {/* Brand-compliant Official Google Sign-In */}
-          <GoogleSignInButton
-            text="signup_with"
-            redirectUrl="/app"
-            onError={(err) => setError(err)}
-          />
-
-          <div className="relative flex items-center justify-center my-2">
-            <div className="border-t border-[#1b253b] w-full" />
-            <span className="bg-[#0c101a] px-3 text-[11px] font-mono text-slate-500 uppercase tracking-wider relative shrink-0">
-              or register with organization email
-            </span>
-          </div>
-
+        <div className="p-8 rounded-3xl bg-[#0c101a] border border-[#1b253b] shadow-2xl shadow-black/80">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium">

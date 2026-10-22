@@ -55,17 +55,13 @@ export default function QCReportDetailPage({
   // Document viewer controls
   const [zoomLevel, setZoomLevel] = useState(100);
   const [activePage, setActivePage] = useState(1);
-  const [pagesRendered, setPagesRendered] = useState<string[]>([]);
-  const [observations, setObservations] = useState<any[]>([]);
-  const [flaggedGaps, setFlaggedGaps] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"FINDINGS" | "NETLIST" | "GAPS">("FINDINGS");
 
   // Human Review State
   const [reviewerComment, setReviewerComment] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Record<string, boolean>>({});
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
-  // Load report dynamically from report store or server job API
+  // Load report dynamically from report store
   useEffect(() => {
     const loaded = getReportById(reportId);
     if (loaded) {
@@ -75,84 +71,6 @@ export default function QCReportDetailPage({
       if (fList.length > 0) {
         setSelectedFindingId(fList[0].id);
       }
-    } else {
-      // Fetch live report from server QC jobs endpoint
-      fetch(`/api/v1/qc/jobs/${reportId}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data && data.report) {
-            const r = data.report;
-            if (Array.isArray(r.pages_rendered)) {
-              setPagesRendered(r.pages_rendered);
-            }
-            if (Array.isArray(r.candidate_observations)) {
-              setObservations(r.candidate_observations);
-            }
-            if (Array.isArray(r.flagged_gaps)) {
-              setFlaggedGaps(r.flagged_gaps);
-            }
-
-            const findingsList: QCFinding[] = (r.rule_findings || []).map((f: any, idx: number) => ({
-              id: `F-${idx + 1}`,
-              qc_run_id: r.report_id || reportId,
-              code: f.code || f.rule_id || `LMS-${idx + 1}`,
-              rule_id: f.rule_id || f.code || `LMS-${idx + 1}`,
-              rule_name: f.rule_name || "Rule Verification",
-              standard_reference: f.standard_reference || "Hyundai VDH Rules",
-              severity: (f.severity as any) || "MAJOR",
-              confidence_score: Number(f.confidence) || 0.95,
-              title: f.title || f.rule_name || `Discrepancy ${f.code}`,
-              description: f.reason || f.explanation || f.description || "Finding detected.",
-              expected_value: f.expected_value || "Per standard manual specification",
-              detected_value: f.detected_value || f.location || "Detected discrepancy on diagram",
-              location: {
-                page: f.page_number || 1,
-                zone: f.location || "Schematic",
-                coordinate_box: f.bounding_box || { page_number: 1, x_min: 100, y_min: 100, x_max: 300, y_max: 200 },
-              },
-              status: "OPEN",
-            }));
-
-            const mappedRun: QCRun = {
-              id: r.report_id || reportId,
-              organization_id: data.organization_id || "org-spandsons",
-              document_id: data.document_id || "doc-live",
-              project_id: data.project_id || "proj-wh402",
-              standard: r.standard || data.standard || "SPANQC Tech Pub (Hyundai VDH)",
-              status: "COMPLETED",
-              overall_result: r.overall_outcome === "PASS" ? "PASS" : "FAIL",
-              quality_score: r.overall_outcome === "PASS" ? 98 : 74,
-              total_rules_evaluated: (r.rule_findings || []).length,
-              total_discrepancies: (r.rule_findings || []).length,
-              critical_count: (r.rule_findings || []).filter((f: any) => f.severity === "CRITICAL").length,
-              major_count: (r.rule_findings || []).filter((f: any) => f.severity === "MAJOR").length,
-              minor_count: (r.rule_findings || []).filter((f: any) => f.severity === "MINOR").length,
-              pass_count: r.overall_outcome === "PASS" ? 12 : 8,
-              started_at: r.created_at || new Date().toISOString(),
-              completed_at: r.created_at || new Date().toISOString(),
-              findings: findingsList,
-              document: {
-                id: "doc-live",
-                organization_id: data.organization_id || "org-spandsons",
-                project_id: data.project_id || "proj-default",
-                filename: data.document_name || r.document_name || "Schematic_Diagram.pdf",
-                file_size_bytes: 1024 * 1024,
-                mime_type: "application/pdf",
-                page_count: r.total_page_count || (Array.isArray(r.pages_rendered) ? r.pages_rendered.length : 1),
-                status: "VALIDATED",
-                storage_path: Array.isArray(r.pages_rendered) && r.pages_rendered.length > 0 ? r.pages_rendered[0] : undefined,
-                created_at: new Date().toISOString(),
-              },
-            };
-
-            setQcRun(mappedRun);
-            setFindings(findingsList);
-            if (findingsList.length > 0) {
-              setSelectedFindingId(findingsList[0].id);
-            }
-          }
-        })
-        .catch((err) => console.error("Failed to load server QC report", err));
     }
   }, [reportId]);
 
@@ -409,43 +327,105 @@ export default function QCReportDetailPage({
           </div>
 
           {/* Canvas with Schematic or Uploaded Image */}
-          <div className="h-[520px] rounded-2xl bg-[#06070a] border border-[#1b253b] relative p-4 font-mono text-xs overflow-auto flex flex-col justify-between bg-schematic-grid-dense select-none">
-            {(pagesRendered.length > 0 || qcRun.document?.storage_path) ? (
+          <div className="h-[520px] rounded-2xl bg-[#06070a] border border-[#1b253b] relative p-6 font-mono text-xs overflow-auto flex flex-col justify-between bg-schematic-grid-dense select-none">
+            {qcRun.document?.storage_path ? (
               <div
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "top left" }}
-                className="transition-transform duration-150 flex flex-col items-center justify-center min-h-[420px] w-full"
+                className="transition-transform duration-150 flex flex-col items-center justify-center min-h-[380px]"
               >
-                <div className="p-2 bg-slate-900/90 border border-slate-800 rounded-lg text-[11px] text-cyan-300 mb-3 w-full flex items-center justify-between">
-                  <span className="font-bold">
-                    SCHEMATIC VIEWPORT: {qcRun.document?.filename} — Sheet {activePage} of {qcRun.document?.page_count || pagesRendered.length || 1}
-                  </span>
-                  <span className="text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30">
-                    VERIFIED SCHEMATIC RASTER
-                  </span>
+                <div className="p-2 bg-slate-900/80 border border-slate-800 rounded-lg text-[11px] text-cyan-300 mb-3 w-full flex justify-between">
+                  <span>LIVE SCHEMATIC VIEWPORT: {qcRun.document.filename}</span>
+                  <span className="text-emerald-400">VERIFIED UPLOAD</span>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={pagesRendered[activePage - 1] || qcRun.document?.storage_path}
-                  alt={`${qcRun.document?.filename} Page ${activePage}`}
-                  className="max-h-[420px] w-auto max-w-full object-contain rounded border border-slate-700 shadow-2xl bg-white"
+                  src={qcRun.document.storage_path}
+                  alt={qcRun.document.filename}
+                  className="max-h-[360px] object-contain rounded border border-slate-700 shadow-2xl"
                 />
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3 py-16">
-                <FileText className="w-12 h-12 text-slate-600" />
-                <span className="font-semibold text-slate-300 text-sm">
-                  Schematic drawing preview initializing...
-                </span>
-                <span className="text-[11px] text-slate-500 max-w-md text-center">
-                  Visual CAD sheet rasterization in progress or document delivered without embedded preview bitmaps.
-                </span>
+              <div
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "top left" }}
+                className="space-y-6 min-w-[620px] transition-transform duration-150"
+              >
+                <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg text-[11px] text-slate-400 flex items-center justify-between">
+                  <span>SCHEMATIC: {qcRun.document?.filename}</span>
+                  <span className="text-slate-400">ZONE B3-D4</span>
+                </div>
+
+                {/* Wire Lines and Highlight Overlay */}
+                <div className="p-6 bg-slate-950/80 rounded-xl border border-slate-800 space-y-6 relative">
+                  <div className="text-slate-500 text-[11px]">
+                    --- CONNECTOR J1 PINOUT MATRIX & HARNESS CHANNELS ---
+                  </div>
+
+                  {/* Wire 101 */}
+                  <div className="flex items-center gap-4 text-slate-400">
+                    <span className="w-20 text-slate-500">PIN 01:</span>
+                    <div className="h-0.5 bg-slate-600 flex-1 relative">
+                      <span className="absolute -top-3 left-8 text-[10px] bg-slate-900 px-1 border border-slate-700 rounded text-slate-300">
+                        W101 20 AWG RED (TB1-P1)
+                      </span>
+                    </div>
+                    <span className="text-emerald-400 text-[10px]">✓ PASS</span>
+                  </div>
+
+                  {/* Wire 102 - Dynamic Evidence Bounding Box */}
+                  <div className="flex items-center gap-4 relative">
+                    <span className="w-20 text-slate-500">PIN 02:</span>
+                    <div className="h-0.5 bg-cyan-500 flex-1 relative">
+                      <div
+                        className={`absolute -top-4 left-6 px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                          selectedFinding?.severity === "CRITICAL"
+                            ? "bg-red-500/25 border-2 border-red-500 text-red-200 shadow-xl shadow-red-500/30 scale-105 animate-pulse"
+                            : "bg-slate-900 border border-slate-700 text-slate-300"
+                        }`}
+                      >
+                        <AlertOctagon className="w-3.5 h-3.5 text-red-400" />
+                        <span>W102 BLU (J1-P2) [EVIDENCE REGION]</span>
+                      </div>
+                    </div>
+                    <span className="text-red-400 text-[10px] font-bold">✗ DEFECT</span>
+                  </div>
+
+                  {/* Wire 103 */}
+                  <div className="flex items-center gap-4 relative">
+                    <span className="w-20 text-slate-500">PIN 03:</span>
+                    <div className="h-0.5 bg-slate-600 flex-1 relative">
+                      <div
+                        className={`absolute -top-4 left-6 px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                          selectedFinding?.severity === "MAJOR"
+                            ? "bg-orange-500/25 border-2 border-orange-500 text-orange-200 shadow-xl shadow-orange-500/30 scale-105"
+                            : "bg-slate-900 border border-slate-700 text-slate-300"
+                        }`}
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
+                        <span>W103 22 AWG (TB1-P3) [FLAGGED]</span>
+                      </div>
+                    </div>
+                    <span className="text-orange-400 text-[10px] font-bold">⚠ MAJOR</span>
+                  </div>
+
+                  {/* Crossing without dot */}
+                  <div className="flex items-center gap-4 relative pt-4 border-t border-slate-900">
+                    <span className="w-20 text-slate-500">NET CROSS:</span>
+                    <div className="h-0.5 bg-slate-600 flex-1 relative">
+                      <div className="absolute -top-4 left-32 px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 bg-slate-900 border border-slate-700 text-slate-400">
+                        <span>CAN_HI ✕ GND (420, 310)</span>
+                      </div>
+                    </div>
+                    <span className="text-orange-400 text-[10px] font-bold">⚠ MAJOR</span>
+                  </div>
+                </div>
               </div>
             )}
 
             <div className="text-[10px] text-slate-500 pt-3 border-t border-slate-900 flex items-center justify-between">
-              <span>ACTIVE SHEET: Page {activePage} of {qcRun.document?.page_count || pagesRendered.length || 1}</span>
+              <span>LOCATION: {selectedFinding?.location?.sheet_reference || "Sheet 1"}</span>
               <span className="font-mono text-cyan-400">
-                {selectedFinding ? `FINDING IN VIEW: ${selectedFinding.code} (${selectedFinding.title})` : "READY FOR INSPECTION"}
+                COORDINATES: X:{selectedFinding?.location?.coordinates?.x || 142} Y:
+                {selectedFinding?.location?.coordinates?.y || 280}
               </span>
             </div>
           </div>
@@ -644,58 +624,17 @@ export default function QCReportDetailPage({
         </div>
       </div>
 
-      {/* BOTTOM SECTION WITH TABS: FINDINGS | NETLIST | GAPS */}
+      {/* DISCREPANCY TABLE */}
       <div className="space-y-4 pt-6 border-t border-slate-800">
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-          <button
-            onClick={() => setActiveTab("FINDINGS")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === "FINDINGS"
-                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-            }`}
-          >
-            <span>QC Discrepancy Findings</span>
-            <Badge size="xs" variant="neutral">{findings.length}</Badge>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("NETLIST")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === "NETLIST"
-                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-            }`}
-          >
-            <span>Traced Wire Netlist & Connections</span>
-            <Badge size="xs" variant="neutral">{observations.length}</Badge>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("GAPS")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === "GAPS"
-                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-            }`}
-          >
-            <span>Flagged Gaps & Doubt Reports</span>
-            <Badge size="xs" variant="neutral">{flaggedGaps.length}</Badge>
-          </button>
-        </div>
-
-        {activeTab === "FINDINGS" && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  All Discrepancies & Findings Catalogue ({filteredFindings.length})
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Click any finding row to isolate its coordinates on the drawing viewer above.
-                </p>
-              </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-bold text-white tracking-tight">
+              All Discrepancies & Findings Catalogue ({filteredFindings.length})
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Click any finding row to isolate its coordinates on the drawing viewer above.
+            </p>
+          </div>
 
           {/* Filters & Search */}
           <div className="flex flex-wrap items-center gap-3">
@@ -804,154 +743,6 @@ export default function QCReportDetailPage({
           </table>
         </div>
       </div>
-    )}
-
-    {activeTab === "NETLIST" && (
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Extracted Wire Netlist & Traced Connections ({observations.length})
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Full schematic wire-row catalogue with Hyundai VDH destination classification (Green / Yellow / Grey / Blue).
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-800 bg-[#0f172a] overflow-hidden">
-          {observations.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/90 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
-                  <tr>
-                    <th className="p-3.5">Sheet</th>
-                    <th className="p-3.5">Wire No</th>
-                    <th className="p-3.5">Colour</th>
-                    <th className="p-3.5">Size (mm²)</th>
-                    <th className="p-3.5">Source Terminal</th>
-                    <th className="p-3.5">Destination Terminal</th>
-                    <th className="p-3.5">Destination Class</th>
-                    <th className="p-3.5">Confidence</th>
-                    <th className="p-3.5">Printed Evidence</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80 font-mono">
-                  {observations.map((obs: any, idx: number) => {
-                    const dClass = obs.destination_class || "GREY";
-                    return (
-                      <tr
-                        key={`obs-${idx}`}
-                        onClick={() => {
-                          if (obs.page) setActivePage(obs.page);
-                        }}
-                        className="hover:bg-slate-900/50 cursor-pointer transition-colors"
-                      >
-                        <td className="p-3.5 text-slate-400">
-                          Page {obs.page || 1}
-                        </td>
-                        <td className="p-3.5 font-bold text-cyan-400">
-                          {obs.wire_no || "—"}
-                        </td>
-                        <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-200 border border-slate-700">
-                            {obs.colour || "—"}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-slate-300">
-                          {obs.size || obs.size_mm2 || "—"}
-                        </td>
-                        <td className="p-3.5 text-slate-200 font-semibold">
-                          {obs.source || "—"}
-                        </td>
-                        <td className="p-3.5 text-slate-200 font-semibold">
-                          {obs.destination || "—"}
-                        </td>
-                        <td className="p-3.5">
-                          {dClass === "GREEN" && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40">
-                              GREEN (Confirmed)
-                            </span>
-                          )}
-                          {dClass === "YELLOW" && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-500/40">
-                              YELLOW (Unverified XRef)
-                            </span>
-                          )}
-                          {dClass === "BLUE" && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-500/40">
-                              BLUE (Rail Note)
-                            </span>
-                          )}
-                          {dClass === "GREY" && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-600">
-                              GREY (Unresolved)
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3.5 text-slate-300">
-                          {typeof obs.confidence === "number" ? `${(obs.confidence * 100).toFixed(0)}%` : "95%"}
-                        </td>
-                        <td className="p-3.5 text-slate-400 text-[11px] font-mono">
-                          {obs.evidence || obs.evidence_text || "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-8 text-center text-slate-400 font-mono text-xs">
-              No candidate wire rows extracted yet for this schematic run.
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-
-    {activeTab === "GAPS" && (
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Flagged Gaps & Honest Doubt Log ({flaggedGaps.length})
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Per SPANQC golden rule: A flagged gap is acceptable. A fabricated entry is never acceptable.
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-800 bg-[#0f172a] p-4">
-          {flaggedGaps.length > 0 ? (
-            <div className="divide-y divide-slate-800">
-              {flaggedGaps.map((gap: any, idx: number) => (
-                <div key={`gap-${idx}`} className="py-3 flex items-start gap-3">
-                  <HelpCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-xs font-bold text-slate-200">
-                      {gap.what || "Unreadable drawing feature"}
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      {gap.why || "Low resolution or ambiguous character."}
-                    </div>
-                    <div className="text-[10px] font-mono text-slate-500 mt-1">
-                      Location: Sheet Page {gap.page || 1}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-6 text-center text-slate-400 font-mono text-xs">
-              Zero visual ambiguity gaps flagged on this schematic.
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-  </div>
-</div>
+    </div>
   );
 }

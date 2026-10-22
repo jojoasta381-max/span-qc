@@ -11,7 +11,7 @@ export class DocumentValidationError extends Error {
   }
 }
 
-export type SupportedDocumentFormat = "pdf" | "png" | "jpeg" | "zip" | "svg";
+export type SupportedDocumentFormat = "pdf" | "png" | "jpeg";
 
 /**
  * Validates document buffer against magic bytes rather than trusting filename or mime-type headers.
@@ -19,16 +19,6 @@ export type SupportedDocumentFormat = "pdf" | "png" | "jpeg" | "zip" | "svg";
 export function detectDocumentFormat(buffer: Buffer): SupportedDocumentFormat {
   if (!buffer || buffer.length < 4) {
     throw new DocumentValidationError("File is empty or corrupted (insufficient header bytes).", 400);
-  }
-
-  // ZIP: PK\x03\x04, PK\x05\x06 (empty), PK\x07\x08 (spanned)
-  if (
-    buffer[0] === 0x50 &&
-    buffer[1] === 0x4b &&
-    (buffer[2] === 0x03 || buffer[2] === 0x05 || buffer[2] === 0x07) &&
-    (buffer[3] === 0x04 || buffer[3] === 0x06 || buffer[3] === 0x08)
-  ) {
-    return "zip";
   }
 
   // PDF: starts with %PDF- (0x25, 0x50, 0x44, 0x46, 0x2D)
@@ -65,14 +55,8 @@ export function detectDocumentFormat(buffer: Buffer): SupportedDocumentFormat {
     return "jpeg";
   }
 
-  // SVG: Check for <svg or <?xml with <svg in initial chunk
-  const headerStr = buffer.subarray(0, Math.min(buffer.length, 1024)).toString("utf8").toLowerCase();
-  if (headerStr.includes("<svg")) {
-    return "svg";
-  }
-
   throw new DocumentValidationError(
-    "Unsupported or invalid file format. Magic byte inspection failed. Supported formats: ZIP, PDF, PNG, JPEG, SVG.",
+    "Unsupported or invalid file format. Magic byte inspection failed. Supported formats: PDF, PNG, JPEG.",
     400
   );
 }

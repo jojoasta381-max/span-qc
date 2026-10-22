@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   }
 
   // Enforce tenant boundary: query strictly by tenantId
-  let projects = await db.project.findMany({
+  const projects = await db.project.findMany({
     where: {
       tenantId: session.tenantId,
     },
@@ -39,27 +39,6 @@ export async function GET(request: Request) {
       createdAt: "desc",
     },
   });
-
-  if (projects.length === 0) {
-    try {
-      const defaultProj = await db.project.create({
-        data: {
-          tenantId: session.tenantId,
-          name: "General Inspection Project",
-          description: "Default project for technical publication wiring checks",
-          standard: "IPC/WHMA-A-620D",
-          status: "ACTIVE",
-        },
-      });
-      projects = [defaultProj];
-    } catch {
-      // If concurrent insert created it, query again
-      projects = await db.project.findMany({
-        where: { tenantId: session.tenantId },
-        orderBy: { createdAt: "desc" },
-      });
-    }
-  }
 
   return NextResponse.json(
     projects.map((p) => ({
