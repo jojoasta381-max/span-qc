@@ -7,12 +7,14 @@ import { useAuth } from "@/lib/context/auth-context";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { Rocket, Lock, Mail, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { Rocket, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/app";
+  const redirectUrl =
+    searchParams.get("redirect") || searchParams.get("callbackUrl") || "/app";
   const { login, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +36,21 @@ function LoginForm() {
   };
 
   return (
-    <div className="p-8 rounded-3xl bg-[#0c101a] border border-[#1b253b] shadow-2xl shadow-black/80">
+    <div className="p-8 rounded-3xl bg-[#0c101a] border border-[#1b253b] shadow-2xl shadow-black/80 space-y-5">
+      {/* Brand-compliant Official Google Sign-In */}
+      <GoogleSignInButton
+        text="signin_with"
+        redirectUrl={redirectUrl}
+        onError={(err) => setError(err)}
+      />
+
+      <div className="relative flex items-center justify-center my-2">
+        <div className="border-t border-[#1b253b] w-full" />
+        <span className="bg-[#0c101a] px-3 text-[11px] font-mono text-slate-500 uppercase tracking-wider relative shrink-0">
+          or sign in with credentials
+        </span>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium">
@@ -86,25 +102,6 @@ function LoginForm() {
         </Button>
       </form>
 
-      {/* Demo Credentials Helper */}
-      <div className="mt-4 p-3 rounded-2xl bg-cyan-950/20 border border-cyan-800/30 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-cyan-300">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          <div className="font-mono text-[11px]">
-            <span className="font-bold text-white">Demo:</span> pravin@spandsons.com
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEmail("pravin@spandsons.com");
-            setPassword("PravinQC@2026!");
-          }}
-          className="text-[11px] font-mono px-2 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors cursor-pointer border border-cyan-500/30"
-        >
-          Auto-fill
-        </button>
-      </div>
 
       <div className="mt-6 pt-5 border-t border-[#1b253b] flex items-center justify-between text-xs text-slate-400">
         <span>Don&apos;t have an account?</span>
@@ -118,7 +115,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-[#06070a] text-slate-100 flex flex-col justify-center items-center p-4 bg-cosmic-mesh">
+    <div
+      className="min-h-screen bg-[#06070a] text-slate-100 flex flex-col justify-center items-center p-4 bg-cosmic-mesh"
+      suppressHydrationWarning
+    >
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-8">

@@ -1,0 +1,23 @@
+---
+# SpanQC Ansible Global Configuration Variables
+app_name: spanqc
+app_dir: /opt/spanqc
+app_user: ubuntu
+
+# NextAuth / App Variables
+app_port: 80
+app_env: production
+database_url: "file:/app/data/dev.db"
+python_service_url: "http://core:8000"
+
+# Secret defaults (can be overridden via environment or extra-vars)
+auth_secret: "{{ lookup('env', 'AUTH_SECRET') | default('spanqc-super-secure-production-secret-token-key-2026', true) }}"
+anthropic_api_key: "{{ lookup('env', 'ANTHROPIC_API_KEY') | default('', true) }}"
+spanqc_model: "claude-sonnet-4-6"
+
+# Payment Gateways (Optional)
+razorpay_key_id: "{{ lookup('env', 'RAZORPAY_KEY_ID') | default('', true) }}"
+razorpay_key_secret: "{{ lookup('env', 'RAZORPAY_KEY_SECRET') | default('', true) }}"
+razorpay_webhook_secret: "{{ lookup('env', 'RAZORPAY_WEBHOOK_SECRET') | default('', true) }}"
+next_public_razorpay_key_id: "{{ lookup('env', 'NEXT_PUBLIC_RAZORPAY_KEY_ID') | default('', true) }}"
+admin_emails: "{{ lookup('env', 'ADMIN_EMAILS') | default('admin@spanqc.com', true) }}"

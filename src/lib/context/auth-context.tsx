@@ -12,6 +12,8 @@ interface AuthContextType {
   login: (email: string, password?: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
+  setAuthSession: (user: User, organization: Organization) => void;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,24 +24,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    async function initAuth() {
-      try {
-        const me = await getMeApi();
-        setUser(me);
-        const org = await getMyOrgApi();
-        setOrganization(org);
-        setIsAuthenticated(true);
-      } catch {
-        // Unauthenticated or session expired: reset state cleanly without mock fallback
-        setUser(null);
-        setOrganization(null);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
+  const refreshAuth = async () => {
+    try {
+      const me = await getMeApi();
+      setUser(me);
+      const org = await getMyOrgApi();
+      setOrganization(org);
+      setIsAuthenticated(true);
+    } catch {
+      setUser(null);
+      setOrganization(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
-    initAuth();
+  };
+
+  const setAuthSession = (u: User, o: Organization) => {
+    setUser(u);
+    setOrganization(o);
+    setIsAuthenticated(true);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    refreshAuth();
   }, []);
 
   const login = async (email: string, password?: string) => {
@@ -93,6 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
+        setAuthSession,
+        refreshAuth,
       }}
     >
       {children}

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/context/auth-context";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
+import { Switch } from "@/components/ui/Switch";
 import {
   User,
   Shield,
@@ -22,18 +23,73 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
 
   // Profile state
-  const [name, setName] = useState(user?.full_name || "Pravin Sundaram");
-  const [email] = useState(user?.email || "pravin@spandsons.com");
+  const [name, setName] = useState(user?.full_name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [profileSaved, setProfileSaved] = useState(false);
+
+  // Sync profile when user loads
+  useEffect(() => {
+    if (user) {
+      if (user.full_name) setName(user.full_name);
+      if (user.email) setEmail(user.email);
+      if (typeof user.is_google_auth_enabled === "boolean") {
+        setIsGoogleAuthEnabled(user.is_google_auth_enabled);
+      }
+    }
+  }, [user]);
 
   // Security state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordSaved, setPasswordSaved] = useState(false);
 
+  // Google Auth toggle state
+  const [isGoogleAuthEnabled, setIsGoogleAuthEnabled] = useState(
+    user?.is_google_auth_enabled ?? true
+  );
+  const [googleToggleLoading, setGoogleToggleLoading] = useState(false);
+  const [googleToggleSuccess, setGoogleToggleSuccess] = useState<string | null>(null);
+  const [googleToggleError, setGoogleToggleError] = useState<string | null>(null);
+
+  const handleToggleGoogleAuth = async (enabled: boolean) => {
+    setIsGoogleAuthEnabled(enabled);
+    setGoogleToggleLoading(true);
+    setGoogleToggleSuccess(null);
+    setGoogleToggleError(null);
+    try {
+      const res = await fetch("/api/v1/users/me/security", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isGoogleAuthEnabled: enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "Failed to update Google auth setting");
+      }
+      setGoogleToggleSuccess(
+        enabled
+          ? "Google sign-in enabled for your account."
+          : "Google sign-in disabled. All logins now strictly require your master password."
+      );
+      setTimeout(() => setGoogleToggleSuccess(null), 3500);
+    } catch (err: unknown) {
+      setIsGoogleAuthEnabled(!enabled); // revert on error
+      setGoogleToggleError(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setGoogleToggleLoading(false);
+    }
+  };
+
   // Organization state
-  const [orgName, setOrgName] = useState(organization?.name || "Spandsons Horizon Engineering Pvt. Ltd.");
-  const [orgSlug] = useState(organization?.slug || "spandsons-horizon");
+  const [orgName, setOrgName] = useState(organization?.name || "");
+  const [orgSlug, setOrgSlug] = useState(organization?.slug || "");
+
+  useEffect(() => {
+    if (organization) {
+      if (organization.name) setOrgName(organization.name);
+      if (organization.slug) setOrgSlug(organization.slug);
+    }
+  }, [organization]);
 
   // Notification toggles
   const [notifyReportComplete, setNotifyReportComplete] = useState(true);
@@ -175,6 +231,55 @@ export default function SettingsPage() {
               <Button variant="outline" size="xs">
                 Configure 2FA
               </Button>
+            </div>
+          </div>
+
+          {/* Google Single Sign-On (SSO) Toggle */}
+          <div className="pt-6 border-t border-[#1b253b] space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-white font-mono uppercase tracking-wider">
+                Google Authentication & Single Sign-On
+              </h4>
+              <span
+                className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                  isGoogleAuthEnabled
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                }`}
+              >
+                {isGoogleAuthEnabled ? "AUTH ENABLED" : "AUTH BLOCKED"}
+              </span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#070b14] border border-[#1b253b] space-y-4">
+              <Switch
+                checked={isGoogleAuthEnabled}
+                onChange={handleToggleGoogleAuth}
+                disabled={googleToggleLoading}
+                label="Allow Sign-in with Google"
+                description="When enabled, team members can authenticate via Google Identity Services. If turned off, all Google login attempts for this account are strictly blocked on the backend, requiring your master password."
+              />
+
+              <div className="p-3.5 rounded-xl bg-[#0b101d] border border-[#18233a] flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-slate-400 leading-relaxed">
+                  <span className="text-slate-200 font-medium">Zero-Knowledge Security: </span>
+                  Google only verifies your identity (2FA/SSO). Even when Google sign-in is active, your Master Password is never sent to our servers and is always required to decrypt your local password vault.
+                </div>
+              </div>
+
+              {googleToggleSuccess && (
+                <div className="text-xs text-emerald-400 flex items-center gap-1.5 font-mono pt-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{googleToggleSuccess}</span>
+                </div>
+              )}
+
+              {googleToggleError && (
+                <div className="text-xs text-rose-400 flex items-center gap-1.5 font-mono pt-1">
+                  <span>{googleToggleError}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,4 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Pixelify Sans', system-ui, sans-serif;
+  --font-mono: 'Pixelify Sans', monospace;
+}
 
 :root {
   --background: #06070a;
@@ -9,20 +15,48 @@
   --border-subtle: #1b253b;
   --border-moderate: #2d3d60;
   --border-glow: rgba(0, 240, 255, 0.4);
-  --header-bg: rgba(9, 12, 21, 0.88);
+  --header-bg: rgba(9, 12, 21, 0.75);
   --accent-cyan: #00f0ff;
   --accent-cobalt: #0066ff;
-  --font-sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", Consolas, Menlo, monospace;
+  --font-sans: 'Pixelify Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Pixelify Sans', monospace;
+  --font-family: 'Pixelify Sans', system-ui, sans-serif;
 }
 
 * {
   box-sizing: border-box;
+  font-family: 'Pixelify Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea,
+kbd,
+code,
+pre,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+div,
+label,
+table,
+th,
+td {
+  font-family: 'Pixelify Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 html {
   scroll-behavior: smooth;
-  font-family: var(--font-sans);
+  font-family: var(--font-sans) !important;
   background-color: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
@@ -38,12 +72,22 @@ body {
   overflow-x: hidden;
   background-color: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans) !important;
+}
+
+.font-mono,
+.font-mono-tabular {
+  font-family: 'Pixelify Sans', monospace !important;
+}
+
+.font-sans {
+  font-family: 'Pixelify Sans', sans-serif !important;
 }
 
 /* Spaceship Cosmic Nebula Background Mesh */
 .bg-cosmic-mesh {
   background-color: #06070a;
-  background-image: 
+  background-image:
     radial-gradient(at 15% 15%, rgba(0, 240, 255, 0.08) 0px, transparent 50%),
     radial-gradient(at 85% 20%, rgba(121, 40, 202, 0.09) 0px, transparent 50%),
     radial-gradient(at 50% 80%, rgba(0, 102, 255, 0.07) 0px, transparent 50%);
@@ -52,14 +96,14 @@ body {
 /* Spaceship Micro Schematic Grid */
 .bg-spaceship-grid {
   background-size: 40px 40px;
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
 }
 
 .bg-schematic-grid {
   background-size: 32px 32px;
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(0, 240, 255, 0.035) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
 }
@@ -118,13 +162,16 @@ body {
   width: 5px;
   height: 5px;
 }
+
 ::-webkit-scrollbar-track {
   background: rgba(6, 7, 10, 0.8);
 }
+
 ::-webkit-scrollbar-thumb {
   background: #1b253b;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #00f0ff;
 }
@@ -137,10 +184,114 @@ body {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
+
+  *,
+  ::before,
+  ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Scroll-Scrubbed Canvas & Marketing Surface Tokens
+   ========================================================================== */
+
+/* Left-aligned copy column, max-width 560px, left padding clamp(24px, 6vw, 96px) */
+.copy-column {
+  position: relative;
+  max-width: 560px;
+  width: 100%;
+  margin-left: 0;
+  padding-left: clamp(24px, 6vw, 96px);
+  padding-right: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Left-to-right gradient scrim behind every copy block (75% transparency fading to 0%) */
+.copy-scrim {
+  position: absolute;
+  top: -48px;
+  bottom: -48px;
+  left: 0;
+  width: min(100vw, 780px);
+  background: linear-gradient(90deg, rgba(5, 10, 23, 0.75) 0%, rgba(5, 10, 23, 0.65) 45%, rgba(5, 10, 23, 0.35) 75%, rgba(5, 10, 23, 0) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Glass Panels (75% transparency with backdrop blur) */
+.glass-panel {
+  background: rgba(10, 22, 44, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(80, 130, 220, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* Status dots (used strictly for status) */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dot-green {
+  background-color: #1ed6a0;
+  box-shadow: 0 0 8px rgba(30, 214, 160, 0.55);
+}
+
+.dot-amber {
+  background-color: #f5b73b;
+  box-shadow: 0 0 8px rgba(245, 183, 59, 0.55);
+}
+
+.dot-red {
+  background-color: #ff4d4f;
+  box-shadow: 0 0 8px rgba(255, 77, 79, 0.55);
+}
+
+/* Reveals Animation */
+.reveal-child {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: transform 700ms ease-out, opacity 700ms ease-out;
+  will-change: transform, opacity;
+}
+
+.reveal-child.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-child {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* Responsive Scrim Adaptations */
+@media (max-width: 767px) {
+  .copy-column {
+    max-width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .copy-scrim {
+    top: -64px;
+    bottom: -24px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: linear-gradient(0deg, rgba(5, 10, 23, 0.75) 0%, rgba(5, 10, 23, 0.65) 60%, rgba(5, 10, 23, 0.35) 85%, rgba(5, 10, 23, 0) 100%);
   }
 }

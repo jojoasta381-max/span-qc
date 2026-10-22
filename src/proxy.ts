@@ -20,7 +20,11 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Always allow public authentication endpoints
-  if (pathname === "/api/v1/auth/login" || pathname === "/api/v1/auth/register") {
+  if (
+    pathname === "/api/v1/auth/login" ||
+    pathname === "/api/v1/auth/register" ||
+    pathname === "/api/v1/auth/google"
+  ) {
     return NextResponse.next();
   }
 

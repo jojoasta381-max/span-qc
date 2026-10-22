@@ -1,0 +1,16 @@
+{
+  "note": "Manual transcription by Claude (viewing the JPG at API-downscaled size, 1568px). Recorded BEFORE inspecting the SVG answer key for this sheet. Only wire labels; no endpoints.",
+  "sheet": "1 FB1-1",
+  "wires": [
+    "164 RD 6",
+    "122A WH/RD 1.5", "122A WH 1.5", "1 WH 1.5", "WH 2.0",
+    "122 WH 1.5", "122 WH/RD 1.5", "2 WH/RD 1.5", "WH 2.0",
+    "88 RD/YE 1.5", "88 RD/YE 2.0", "88 RD/YE 1.5",
+    "42 YE 0.75", "42 YE 0.75", "45 YE 0.75", "1 YE 0.75", "45A YE 0.75",
+    "11 RD 1.0", "11 RD 1.0", "10 RD 0.75", "10A RD 0.75",
+    "167 WH 2.0", "167 WH 2.0", "167A WH 2.0",
+    "147 RD/WH 2.0", "147 RD/WH 2.0",
+    "16 RD 1.0", "16 RD 1.0", "14 RD 1.0", "4 RD", "4 RD", "4A RD",
+    "G18 BK 0.75"
+  ]
+}

@@ -1,0 +1,43 @@
+[
+  {
+    "when": "2026-10-17T16:05:05+00:00",
+    "prompt_version": "extract_v1 (manual read)",
+    "model": "claude (session reader, not the production API model)",
+    "change_note": "BASELINE. Two real sheets scored against SVG ground truth. Finding: reader silently repaired '81K BKWH 1.0' -> 'BK/WH'. Next: extract_v2 adds rule 8 only (untested; needs a live API run).",
+    "aggregate": {
+      "sheets": 2,
+      "truth_labels": 87,
+      "observed_labels": 87,
+      "matched": 86,
+      "precision": 0.9885,
+      "recall": 0.9885,
+      "fabricated_count": 1
+    },
+    "per_sheet": [
+      {
+        "sheet": "1 FB1-1",
+        "truth": 33,
+        "observed": 33,
+        "matched": 33,
+        "fabricated": [],
+        "missed": [],
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      {
+        "sheet": "2-5",
+        "truth": 54,
+        "observed": 54,
+        "matched": 53,
+        "fabricated": [
+          "81K BK/WH 1 x1"
+        ],
+        "missed": [
+          "<anomaly as printed> x1"
+        ],
+        "precision": 0.9815,
+        "recall": 0.9815
+      }
+    ]
+  }
+]

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SPANQC — DevOps & Infrastructure Engineering Playbook</title>
+  <style>
+    /* ==========================================================================
+       SPANQC DEVOPS PLAYBOOK - HIGH QUALITY PRINT / PDF STYLING
+       ========================================================================== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    @page {
+      size: A4;
+      margin: 14mm 14mm 14mm 14mm;
+      @bottom-right {
+        content: "Page " counter(page);
+        font-family: 'Inter', sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 8.8pt;
+      line-height: 1.48;
+      color: #1e293b;
+      background: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Page Breaks Control */
+    .page-break {
+      page-break-after: always;
+      break-after: page;
+    }
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* Cover Page */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 260mm;
+      max-height: 260mm;
+      padding: 10px 10px 0 10px;
+      overflow: hidden;
+    }
+    .cover-top {
+      border-top: 6px solid #2563eb;
+      padding-top: 24px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      margin-right: 6px;
+    }
+    .badge-primary { background: #dbeafe; color: #1d4ed8; }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-dark { background: #0f172a; color: #f8fafc; }
+
+    .cover-title {
+      font-size: 26pt;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.15;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .cover-subtitle {
+      font-size: 11pt;
+      font-weight: 400;
+      color: #475569;
+      line-height: 1.4;
+      margin-bottom: 20px;
+    }
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .meta-item h4 {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .meta-item p {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .cover-footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 12px;
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 7.5pt;
+      color: #64748b;
+    }
+
+    /* Headings */
+    h1 {
+      font-size: 15pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e2e8f0;
+      break-after: avoid;
+    }
+    h2 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      break-after: avoid;
+    }
+    h3 {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      break-after: avoid;
+    }
+    p {
+      margin-bottom: 7px;
+      color: #334155;
+    }
+    ul, ol {
+      margin-left: 18px;
+      margin-bottom: 8px;
+      color: #334155;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 10px 0;
+      font-size: 7.8pt;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+      text-align: left;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.2pt;
+      line-height: 1.4;
+      padding: 7px 10px;
+      border-radius: 5px;
+      margin: 6px 0 8px 0;
+      overflow-x: auto;
+      border: 1px solid #1e293b;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5pt;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+    pre code {
+      background: transparent;
+      color: #f8fafc;
+      padding: 0;
+    }
+
+    /* Callout Boxes */
+    .callout {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 8px 12px;
+      border-radius: 0 5px 5px 0;
+      margin: 8px 0 10px 0;
+      font-size: 8pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .callout-title {
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 2px;
+    }
+    .callout.warning {
+      border-left-color: #eab308;
+      background: #fefce8;
+    }
+    .callout.warning .callout-title { color: #854d0e; }
+    .callout.danger {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    .callout.danger .callout-title { color: #991b1b; }
+    .callout.success {
+      border-left-color: #10b981;
+      background: #ecfdf5;
+    }
+    .callout.success .callout-title { color: #065f46; }
+
+    /* Diagram Styles */
+    .diagram-container {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px;
+      margin: 8px 0 10px 0;
+      text-align: center;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .diagram-caption {
+      font-size: 7.5pt;
+      color: #64748b;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* Grid layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 8px 10px;
+    }
+    .card h4 {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 3px;
+    }
+    .card p {
+      font-size: 7.8pt;
+      margin-bottom: 3px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       PAGE 1: COVER PAGE
+       ========================================================================== -->
+  <div class="cover page-break">
+    <div class="cover-top">
+      <span class="badge badge-primary">DevOps & Cloud Engineering</span>
+      <span class="badge badge-dark">AWS Production</span>
+      <span class="badge badge-success">Live Status: Verified</span>
+      <h1 class="cover-title">SPANQC Infrastructure & Deployment Playbook</h1>
+      <p class="cover-subtitle">
+        Comprehensive Technical Handover & Operational Runbook for Cloud Infrastructure,
+        Containerized Microservices, Automated Provisioning, and CI/CD on Amazon Web Services.
+      </p>
+
+      <div class="callout success">
+        <div class="callout-title">Document Purpose & Audience</div>
+        This document is prepared exclusively for DevOps Engineers, Site Reliability Engineers (SREs),
+        and Cloud Architects taking ownership of the SPANQC AWS infrastructure, provisioning pipelines,
+        container orchestration, secrets management, and day-2 operations.
+      </div>
+
+      <div class="cover-meta-grid">
+        <div class="meta-item">
+          <h4>Target Application</h4>
+          <p>SPANQC (Tech Pub Wiring Diagram QC System)</p>
+        </div>
+        <div class="meta-item">
+          <h4>Cloud Provider & Region</h4>
+          <p>Amazon Web Services (AWS) — ap-south-1 (Mumbai)</p>
+        </div>
+        <div class="meta-item">
+          <h4>Live Elastic IP / Ingress URL</h4>
+          <p>3.109.239.116 (http://3.109.239.116)</p>
+        </div>
+        <div class="meta-item">
+          <h4>Infrastructure as Code</h4>
+          <p>Terraform (~&gt; 5.0) & Ansible (Core 2.15+)</p>
+        </div>
+        <div class="meta-item">
+          <h4>Host Specifications</h4>
+          <p>AWS EC2 t3.medium (Ubuntu 24.04 LTS, 4GB Swap)</p>
+        </div>
+        <div class="meta-item">
+          <h4>Deployment Stack</h4>
+          <p>Docker CE, Docker Compose v2, Next.js 16, Python 3.12</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <h3 style="font-size: 8.5pt; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 8px;">Document Contents at a Glance</h3>
+        <ol style="font-size: 8pt; line-height: 1.6; color: #334155;">
+          <li><strong>Section 1:</strong> Cloud & Container Topology (with High-Resolution Vector Architecture Diagram)</li>
+          <li><strong>Section 2:</strong> DevOps Tech Stack, Tooling Matrix & Repository File Layout</li>
+          <li><strong>Section 3:</strong> Step-by-Step AWS Infrastructure Provisioning with Terraform</li>
+          <li><strong>Section 4:</strong> Step-by-Step Host Hardening & Configuration Management with Ansible</li>
+          <li><strong>Section 5:</strong> Containerization & Microservice Orchestration (Docker Compose)</li>
+          <li><strong>Section 6:</strong> Production DevOps Battle-Tested Gotchas & Technical Fixes</li>
+          <li><strong>Section 7:</strong> Secrets Matrix, Environment Variables & Day-2 Operational Runbook</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <span>SPANQC Engineering &copy; 2026. All Rights Reserved.</span>
+      <span>Confidential — Internal DevOps Engineering Handover</span>
+      <span>Document Ver: 1.0.0</span>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       PAGE 2: ARCHITECTURE & SYSTEM TOPOLOGY
+       ========================================================================== -->
+  <div class="page-break">
+    <h1>1. Cloud & Container Architecture</h1>
+    <p>
+      SPANQC is deployed as a resilient, single-host microservices topology inside a dedicated AWS Virtual Private Cloud (VPC).
+      The architecture cleanly isolates public web delivery, background job processing, and AI transcription / deterministic verification.
+    </p>
+
+    <!-- HIGH FIDELITY SVG ARCHITECTURE DIAGRAM -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 760 460" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gradVpc" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#eff6ff"/>
+            <stop offset="100%" stop-color="#f8fafc"/>
+          </linearGradient>
+          <linearGradient id="gradEc2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#f1f5f9"/>
+          </linearGradient>
+          <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+          </filter>
+        </defs>
+
+        <!-- Background AWS Boundary -->
+        <rect x="10" y="8" width="740" height="444" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="25" y="28" font-family="Inter" font-size="10.5" font-weight="700" fill="#0f172a">AWS Cloud: Region ap-south-1 (Mumbai)</text>
+
+        <!-- Internet Gateway & EIP -->
+        <rect x="25" y="42" width="710" height="36" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        <text x="38" y="64" font-family="Inter" font-size="8.5" font-weight="600" fill="#1e293b">Internet Gateway (IGW) &amp; Elastic IP: 3.109.239.116 (Public DNS Ingress)</text>
+        <circle cx="690" cy="60" r="5" fill="#10b981"/>
+        <text x="700" y="63" font-family="Inter" font-size="7.5" fill="#0f172a">Port 80/443</text>
+
+        <!-- VPC Boundary -->
+        <rect x="25" y="88" width="710" height="350" rx="8" fill="url(#gradVpc)" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="38" y="106" font-family="Inter" font-size="9.5" font-weight="700" fill="#1d4ed8">Dedicated VPC (10.0.0.0/16) — Public Subnet (10.0.1.0/24)</text>
+
+        <!-- Security Group Boundary -->
+        <rect x="38" y="118" width="684" height="308" rx="7" fill="#ffffff" stroke="#64748b" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="50" y="133" font-family="Inter" font-size="8" font-weight="600" fill="#475569">Security Group: spanqc-prod-sg (Inbound: 22/SSH, 80/HTTP, 443/HTTPS | Outbound: ALL)</text>
+
+        <!-- EC2 Instance Box -->
+        <rect x="50" y="145" width="660" height="268" rx="7" fill="url(#gradEc2)" stroke="#0284c7" stroke-width="1.5" filter="url(#shadow)"/>
+        <text x="64" y="163" font-family="Inter" font-size="9" font-weight="700" fill="#0369a1">EC2 Instance: t3.medium (Ubuntu 24.04 LTS Noble | 2 vCPU, 4GB RAM + 4GB Swap | 30GB gp3 SSD)</text>
+
+        <!-- Host System Services Layer -->
+        <rect x="64" y="174" width="632" height="28" rx="4" fill="#0f172a"/>
+        <text x="75" y="192" font-family="JetBrains Mono" font-size="7.8" fill="#38bdf8">Host OS Layer: UFW Firewall | Fail2ban | Systemd Timer (docker-prune.timer) | Docker Engine 27+</text>
+
+        <!-- Docker Network Bridge Boundary -->
+        <rect x="64" y="210" width="632" height="190" rx="6" fill="#f8fafc" stroke="#6366f1" stroke-width="1.2"/>
+        <text x="75" y="225" font-family="Inter" font-size="8" font-weight="700" fill="#4f46e5">Docker Internal Bridge Network: spanqc-network (Service Discovery DNS)</text>
+
+        <!-- Container 1: spanqc-web -->
+        <rect x="78" y="234" width="290" height="152" rx="6" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+        <rect x="78" y="234" width="290" height="22" rx="6" fill="#2563eb"/>
+        <text x="88" y="249" font-family="Inter" font-size="8.5" font-weight="700" fill="#ffffff">Container: spanqc-web (Next.js 16)</text>
+        <text x="88" y="270" font-family="Inter" font-size="7.3" fill="#334155">• Next.js Standalone Runner (Port 3000 -&gt; Host 80)</text>
+        <text x="88" y="284" font-family="Inter" font-size="7.3" fill="#334155">• NextAuth Session / CSRF Origin Validation</text>
+        <text x="88" y="298" font-family="Inter" font-size="7.3" fill="#334155">• Background Worker: Asynchronous Job Poller (Interval: 3s)</text>
+        <text x="88" y="312" font-family="Inter" font-size="7.3" fill="#334155">• SQLite Client: Prisma ORM (/app/data/dev.db)</text>
+        <text x="88" y="326" font-family="Inter" font-size="7.3" fill="#334155">• Non-Root Execution: User nextjs (UID 1001)</text>
+        <rect x="88" y="337" width="270" height="38" rx="3" fill="#eff6ff" stroke="#93c5fd"/>
+        <text x="94" y="350" font-family="JetBrains Mono" font-size="6.8" fill="#1d4ed8">Volume: spanqc_data (/app/data/dev.db)</text>
+        <text x="94" y="365" font-family="JetBrains Mono" font-size="6.8" fill="#1d4ed8">Volume: spanqc_storage (/app/storage)</text>
+
+        <!-- Inter-container HTTP Link Arrow -->
+        <path d="M 368 300 L 440 300" stroke="#4f46e5" stroke-width="2" stroke-dasharray="4,4"/>
+        <text x="376" y="293" font-family="JetBrains Mono" font-size="6.8" fill="#4f46e5">HTTP REST</text>
+        <text x="372" y="312" font-family="JetBrains Mono" font-size="6.5" fill="#64748b">http://core:8000</text>
+
+        <!-- Container 2: spanqc-core -->
+        <rect x="444" y="234" width="240" height="152" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+        <rect x="444" y="234" width="240" height="22" rx="6" fill="#059669"/>
+        <text x="454" y="249" font-family="Inter" font-size="8.5" font-weight="700" fill="#ffffff">Container: spanqc-core (FastAPI)</text>
+        <text x="454" y="270" font-family="Inter" font-size="7.3" fill="#334155">• FastAPI Engine on Uvicorn (Port 8000)</text>
+        <text x="454" y="284" font-family="Inter" font-size="7.3" fill="#334155">• PDF Rasterizer: PyMuPDF (fitz)</text>
+        <text x="454" y="298" font-family="Inter" font-size="7.3" fill="#334155">• Deterministic Rules Engine (rules.py)</text>
+        <text x="454" y="312" font-family="Inter" font-size="7.3" fill="#334155">• Non-Root Execution: User spanqc (1002)</text>
+        <rect x="454" y="328" width="220" height="47" rx="3" fill="#f0fdf4" stroke="#86efac"/>
+        <text x="460" y="343" font-family="Inter" font-size="7" font-weight="600" fill="#166534">Egress Outbound -&gt; Anthropic API</text>
+        <text x="460" y="356" font-family="JetBrains Mono" font-size="6.5" fill="#15803d">api.anthropic.com:443 (Claude 3.5)</text>
+        <text x="460" y="368" font-family="Inter" font-size="6.5" fill="#166534">No Exposed Inbound Ports to Host</text>
+      </svg>
+      <div class="diagram-caption">Figure 1.1: Complete End-to-End Infrastructure, Network, and Microservices Topology.</div>
+    </div>
+
+    <h2>1.1 Architectural Principles</h2>
+    <ul>
+      <li><strong>Deterministic Verification with AI Transcription:</strong> Anthropic Claude Vision transcribes drawing metadata, pin configurations, and wire IDs; <code>spanqc_core/rules.py</code> executes 100% deterministic code-level verification without LLM hallucination.</li>
+      <li><strong>Fail-Closed Security Posture:</strong> Missing keys, partial files, or schema corruptions yield <code>REVIEW</code> or structured errors. Never simulated, never false passes.</li>
+      <li><strong>Isolated Microservices Networking:</strong> The Python verification engine (<code>spanqc-core</code>) has zero exposed external ports. It is reachable exclusively by the Next.js gateway via the private Docker bridge network (<code>http://core:8000</code>).</li>
+      <li><strong>Zero Overhead Data Storage:</strong> Production utilizes high-speed SQLite on persistent Docker named volumes with WAL (Write-Ahead Logging) mode, avoiding multi-hundred dollar RDS overhead for initial high-performance throughput.</li>
+    </ul>
+  </div>
+
+  <!-- ==========================================================================
+       PAGE 3: TOOLING & TERRAFORM PROVISIONING
+       ========================================================================== -->
+  <div class="page-break">
+    <h1>2. Tooling Matrix & AWS Provisioning (Terraform)</h1>
+    <p>
+      The infrastructure was engineered with industry-standard Infrastructure as Code (IaC) and configuration management tools to guarantee idempotent, reproducible deployments.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Technology</th>
+          <th>Version</th>
+          <th>Role / Configuration in SPANQC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cloud Provider</strong></td>
+          <td>Amazon Web Services</td>
+          <td>ap-south-1</td>
+          <td>VPC, IGW, Route Tables, Security Group, EC2 Instance, Elastic IP, gp3 Storage.</td>
+        </tr>
+        <tr>
+          <td><strong>IaC</strong></td>
+          <td>Terraform</td>
+          <td>&gt;= 1.5.0</td>
+          <td>Provisions all AWS networking and computing assets with dynamic inventory output.</td>
+        </tr>
+        <tr>
+          <td><strong>Config Management</strong></td>
+          <td>Ansible Core</td>
+          <td>&gt;= 2.15</td>
+          <td>Configures base OS, SWAP, firewall, docker daemon, and deploys microservices.</td>
+        </tr>
+        <tr>
+          <td><strong>Host OS</strong></td>
+          <td>Ubuntu Server</td>
+          <td>24.04 LTS (Noble)</td>
+          <td>Base operating system with hardened kernel parameters, UFW firewall, and Fail2ban.</td>
+        </tr>
+        <tr>
+          <td><strong>Container Engine</strong></td>
+          <td>Docker CE</td>
+          <td>27.x + Compose v2</td>
+          <td>Multi-container orchestration, volume persistence, and isolated bridge network.</td>
+        </tr>
+        <tr>
+          <td><strong>Frontend & API</strong></td>
+          <td>Next.js (Standalone)</td>
+          <td>16.3.6 (Turbopack)</td>
+          <td>Node.js 20 Alpine runner, reverse proxy handler, NextAuth, Prisma SQLite engine.</td>
+        </tr>
+        <tr>
+          <td><strong>Core QC Service</strong></td>
+          <td>FastAPI / Python</td>
+          <td>3.12-slim</td>
+          <td>Uvicorn ASGI server, PyMuPDF (fitz) rasterizer, Anthropic Claude Vision API client.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2.1 Step-by-Step AWS Provisioning (Terraform)</h2>
+    <p>The AWS foundation is declared in <code>infra/terraform/</code>. It constructs an isolated, secure perimeter with a static Elastic IP:</p>
+
+    <h3>Step 1: Authenticate & Initialize Terraform</h3>
+    <pre><code># Authenticate and navigate to terraform directory
+export AWS_DEFAULT_REGION="ap-south-1"
+cd /data/projects/uiux/infra/terraform
+
+# Download AWS provider plugins (~> 5.0) and validate
+terraform init -upgrade
+terraform validate</code></pre>
+
+    <h3>Step 2: Plan and Provision AWS Assets</h3>
+    <pre><code># Generate execution plan and apply infrastructure
+terraform plan -out=tfplan
+terraform apply -auto-approve tfplan
+
+# Inspect generated outputs
+terraform output
+# public_ip  = "3.109.239.116"
+# instance_id = "i-09ab7..."
+# Dynamic inventory automatically written to: infra/ansible/inventory.ini</code></pre>
+
+    <h3>Step 3: Terraform Managed Resources Matrix</h3>
+    <ul>
+      <li><strong>aws_vpc (main):</strong> Dedicated CIDR block <code>10.0.0.0/16</code> with DNS hostnames and DNS resolution enabled.</li>
+      <li><strong>aws_subnet (public):</strong> Subnet <code>10.0.1.0/24</code> in AZ <code>ap-south-1a</code> with public IP allocation on launch.</li>
+      <li><strong>aws_security_group (spanqc-prod-sg):</strong> Port 22 (SSH), Port 80 (HTTP Web), Port 443 (HTTPS), Egress (All).</li>
+      <li><strong>aws_instance (web):</strong> <code>t3.medium</code> instance running Ubuntu 24.04 LTS with 30GB gp3 encrypted root volume.</li>
+      <li><strong>aws_eip (spanqc_ip):</strong> Static public Elastic IP (<code>3.109.239.116</code>) associated with the EC2 instance.</li>
+    </ul>
+
+    <div class="callout warning">
+      <div class="callout-title">DevOps Safety Check</div>
+      Do NOT delete or release the Elastic IP in the AWS Web Console. The IP <code>3.109.239.116</code> is mapped directly in customer DNS configurations. Always manage life cycles through Terraform.
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       PAGE 4: ANSIBLE CONFIGURATION MANAGEMENT
+       ========================================================================== -->
+  <div class="page-break">
+    <h1>3. Host Hardening & Configuration (Ansible)</h1>
+    <p>
+      Once Terraform provisions the EC2 instance, Ansible takes over to configure the server, apply security benchmarks, install the container runtime, and deploy the application.
+    </p>
+
+    <h2>3.1 Ansible Roles Breakdown</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>1. Role: common</h4>
+        <p>• Creates a <strong>4GB swapfile</strong> at <code>/swapfile</code> to absorb high-concurrency Node.js build spikes on t3.medium.</p>
+        <p>• Tunes <code>vm.swappiness = 10</code> and increases <code>fs.inotify.max_user_watches</code>.</p>
+        <p>• Configures <strong>UFW Firewall</strong>: Default deny incoming, allow 22/tcp, 80/tcp, 443/tcp.</p>
+        <p>• Deploys <strong>Fail2ban</strong> with SSH jail to deter automated brute-force attacks.</p>
+      </div>
+
+      <div class="card">
+        <h4>2. Role: docker</h4>
+        <p>• Configures the official Docker APT repository with verified GPG key.</p>
+        <p>• Installs <code>docker-ce</code>, <code>docker-ce-cli</code>, <code>containerd.io</code>, and <code>docker-compose-plugin</code>.</p>
+        <p>• Adds deployment user (<code>ubuntu</code>) to the <code>docker</code> group for passwordless container management.</p>
+        <p>• Enables and starts the <code>docker.service</code> systemd daemon.</p>
+      </div>
+
+      <div class="card">
+        <h4>3. Role: maintenance</h4>
+        <p>• Deploys <code>docker-prune.service</code> (oneshot <code>docker system prune -af</code>).</p>
+        <p>• Deploys <code>docker-prune.timer</code> running every Sunday at 03:00 AM.</p>
+        <p>• Cleans dangling images older than 168 hours to prevent EBS storage exhaustion.</p>
+      </div>
+
+      <div class="card">
+        <h4>4. Role: spanqc_app</h4>
+        <p>• Creates application directories at <code>/opt/spanqc</code>.</p>
+        <p>• Synchronizes application code with strict exclusions (no <code>node_modules</code>, <code>.git</code>, or <code>.terraform</code>).</p>
+        <p>• Generates production <code>.env</code> file from Jinja2 template.</p>
+        <p>• Executes <code>docker compose up -d --build</code> with orphan removal.</p>
+      </div>
+    </div>
+
+    <h2>3.2 Step-by-Step Ansible Execution Guide</h2>
+
+    <h3>Step 1: Test Server Connectivity</h3>
+    <pre><code>cd /data/projects/uiux/infra/ansible
+
+# Ping remote host via SSH using dynamic inventory
+ansible -i inventory.ini spanqc_servers -m ping</code></pre>
+
+    <h3>Step 2: Run Full Provisioning Playbook</h3>
+    <pre><code># Execute all roles with secrets passed safely via extra-vars
+ansible-playbook -i inventory.ini playbook.yml \
+  --extra-vars "anthropic_api_key=$ANTHROPIC_API_KEY auth_secret=$AUTH_SECRET"</code></pre>
+
+    <h3>Step 3: Targeted Tag Execution (For Rapid Updates)</h3>
+    <pre><code># Deploy application code changes only (skipping OS hardening)
+ansible-playbook -i inventory.ini playbook.yml --tags "app,deploy"
+
+# Re-configure firewall and base packages only
+ansible-playbook -i inventory.ini playbook.yml --tags "common"</code></pre>
+
+    <h2>3.3 Automated Maintenance Systemd Timer</h2>
+    <p>To eliminate disk leaks from Docker build caches on production servers, Ansible sets up an automated systemd timer:</p>
+    <pre><code># Check active status of Docker pruning timer on host
+ssh -i ~/.ssh/id_ed25519 ubuntu@3.109.239.116 "systemctl status docker-prune.timer"</code></pre>
+  </div>
+
+  <!-- ==========================================================================
+       PAGE 5: CONTAINERIZATION & DOCKER COMPOSE
+       ========================================================================== -->
+  <div class="page-break">
+    <h1>4. Containerization & Service Orchestration</h1>
+    <p>
+      SPANQC services run as non-root, isolated Linux containers governed by <code>docker-compose.yml</code>.
+    </p>
+
+    <h2>4.1 Multi-Stage Dockerfile Architecture</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>Frontend Container (Dockerfile.web)</h4>
+        <p>• <strong>Stage 1 (deps):</strong> Installs dependencies with <code>npm ci</code>, runs <code>npx prisma generate</code>.</p>
+        <p>• <strong>Stage 2 (builder):</strong> Builds standalone Next.js server with <code>NODE_OPTIONS="--max-old-space-size=1024"</code>.</p>
+        <p>• <strong>Stage 3 (runner):</strong> Minimal Alpine Linux runner (approx. 180MB total size). Runs as unprivileged user <code>nextjs:nodejs</code> (UID 1001).</p>
+        <p>• <strong>Entrypoint:</strong> <code>docker-entrypoint.sh</code> creates persistent volume directories and initializes SQLite schemas.</p>
+      </div>
+
+      <div class="card">
+        <h4>Core Engine Container (Dockerfile.core)</h4>
+        <p>• <strong>Base:</strong> <code>python:3.12-slim</code> with minimal runtime utilities.</p>
+        <p>• <strong>User:</strong> Runs as unprivileged user <code>spanqc:spanqc</code> (UID 1002).</p>
+        <p>• <strong>Components:</strong> FastAPI, PyMuPDF (C-based high-speed vector rasterizer), Anthropic SDK, and deterministic rule validation engine.</p>
+        <p>• <strong>Healthcheck:</strong> Actively checks <code>curl -f http://127.0.0.1:8000/health</code> every 20 seconds.</p>
+      </div>
+    </div>
+
+    <h2>4.2 Production Docker Compose Specification</h2>
+
+    <pre><code>services:
+  web:
+    container_name: spanqc-web
+    build: { context: ., dockerfile: Dockerfile.web }
+    image: spanqc-web:latest
+    restart: unless-stopped
+    ports:
+      - "80:3000"                           # Direct host port 80 mapping
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/dev.db
+      - AUTH_SECRET=${AUTH_SECRET}
+      - PYTHON_SERVICE_URL=http://core:8000 # Internal Docker DNS
+    volumes:
+      - spanqc_data:/app/data               # Persistent SQLite database
+      - spanqc_storage:/app/storage         # Uploaded diagram PDFs and crops
+    depends_on:
+      core:
+        condition: service_healthy          # Waits until core healthcheck passes
+    networks:
+      - spanqc-network
+
+  core:
+    container_name: spanqc-core
+    build: { context: ., dockerfile: Dockerfile.core }
+    image: spanqc-core:latest
+    restart: unless-stopped
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SPANQC_MODEL=claude-sonnet-4-6
+    networks:
+      - spanqc-network                      # No exposed host ports (Internal only)
+
+volumes:
+  spanqc_data:
+  spanqc_storage:
+
+networks:
+  spanqc-network:
+    driver: bridge</code></pre>
+  </div>
+
+  <!-- ==========================================================================
+       PAGE 6: DEVOPS BATTLE-TESTED GOTCHAS & SOLUTIONS
+       ========================================================================== -->
+  <div class="page-break">
+    <h1>5. Real-World DevOps Gotchas & Fixes</h1>
+    <p>
+      During the production deployment of SPANQC, five critical infrastructure and networking challenges were encountered and permanently resolved. Incoming engineers must understand these solutions:
+    </p>
+
+    <div class="callout danger">
+      <div class="callout-title">Gotcha #1: Docker Build Context Out-of-Memory (OOM)</div>
+      <p><strong>Symptom:</strong> Running <code>docker compose build</code> on EC2 took over 12 minutes or crashed with exit code 137 (OOMKilled).</p>
+      <p><strong>Root Cause:</strong> The build context included the <code>infra/terraform/</code> directory, which contained heavy Terraform provider binaries (<code>.terraform/</code> = 872 MB) and temporary archives.</p>
+      <p><strong>Permanent Fix:</strong> Updated <code>.dockerignore</code> to explicitly exclude <code>infra/</code>, <code>experiments/</code>, and <code>.git/</code>. Reduced context transfer from <strong>872 MB down to 30 kB</strong>. Builds now complete in under 45 seconds.</p>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">Gotcha #2: Next.js 16 Reverse Proxy 10MB Body Truncation</div>
+      <p><strong>Symptom:</strong> Uploading large wiring diagram PDFs or multi-sheet ZIP archives failed with <code>400 Bad Request: Malformed multipart form data</code>.</p>
+      <p><strong>Root Cause:</strong> Next.js 16 Turbopack introduced a strict 10 MB default payload cap on server proxy routes.</p>
+      <p><strong>Permanent Fix:</strong> Added <code>experimental: { proxyClientMaxBodySize: "100mb" }</code> in <code>next.config.ts</code>. The server now comfortably parses high-resolution 50MB+ engineering CAD exports.</p>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">Gotcha #3: CSRF Mismatch on Direct Host Port 80 Access</div>
+      <p><strong>Symptom:</strong> Login or Register forms failed with <code>Invalid origin</code> or CSRF rejection when accessing via the public IP <code>http://3.109.239.116</code>.</p>
+      <p><strong>Root Cause:</strong> The container listens internally on port 3000 while the host listens on port 80. Standard <code>request.url</code> parsed host as <code>localhost:3000</code>, mismatching the browser's <code>Origin: http://3.109.239.116</code>.</p>
+      <p><strong>Permanent Fix:</strong> Modified <code>src/lib/server/auth/csrf.ts</code> to prioritize <code>request.headers.get("host")</code> over internal URL hostname.</p>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-title">Gotcha #4: Inter-Service Docker DNS Discovery</div>
+      <p><strong>Symptom:</strong> Web container logs showed <code>ECONNREFUSED 127.0.0.1:8000</code> when dispatching QC jobs to the Python engine.</p>
+      <p><strong>Root Cause:</strong> In Docker bridge networks, <code>localhost</code> inside container A refers to container A, not container B.</p>
+      <p><strong>Permanent Fix:</strong> Configured <code>PYTHON_SERVICE_URL=http://core:8000</code> and <code>SPANQC_PYTHON_SERVICE_URL=http://core:8000</code>. Docker's embedded DNS automatically resolves <code>core</code> to the Python container's IP.</p>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-title">Gotcha #5: Database Schema Push Inside Container</div>
+      <p><strong>Symptom:</strong> Adding new tables to <code>prisma/schema.prisma</code> did not immediately reflect in the running database on EC2.</p>
+      <p><strong>Solution:</strong> Run the migration command inside the running container:
+      <code>docker compose exec web npx prisma db push</code>. This updates <code>/app/data/dev.db</code> on the persistent volume without requiring a service restart.</p>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       PAGE 7: SECRETS, CONFIG & DAY-2 RUNBOOK
+       ========================================================================== -->
+  <div class="page-break">
+    <h1>6. Secrets Matrix & Day-2 Operations Runbook</h1>
+
+    <h2>6.1 Production Environment Variables Reference</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Variable Name</th>
+          <th>Container</th>
+          <th>Description & Value Format</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>DATABASE_URL</code></td>
+          <td>spanqc-web</td>
+          <td>Path to SQLite database: <code>file:/app/data/dev.db</code></td>
+        </tr>
+        <tr>
+          <td><code>AUTH_SECRET</code></td>
+          <td>spanqc-web</td>
+          <td>32+ character cryptographic secret for session JWT encryption.</td>
+        </tr>
+        <tr>
+          <td><code>NEXTAUTH_URL</code></td>
+          <td>spanqc-web</td>
+          <td>Public origin: <code>http://3.109.239.116</code> (or customer domain).</td>
+        </tr>
+        <tr>
+          <td><code>PYTHON_SERVICE_URL</code></td>
+          <td>spanqc-web</td>
+          <td>Internal microservice route: <code>http://core:8000</code></td>
+        </tr>
+        <tr>
+          <td><code>ANTHROPIC_API_KEY</code></td>
+          <td>spanqc-core</td>
+          <td>Anthropic Claude API key (Format: <code>sk-ant-api03-...</code>).</td>
+        </tr>
+        <tr>
+          <td><code>SPANQC_MODEL</code></td>
+          <td>spanqc-core</td>
+          <td>Model target: <code>claude-sonnet-4-6</code></td>
+        </tr>
+        <tr>
+          <td><code>ADMIN_EMAILS</code></td>
+          <td>spanqc-web</td>
+          <td>Comma-separated list of administrative tenant accounts.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>6.2 Day-2 Operational Commands (Cheat Sheet)</h2>
+
+    <h3>1. Inspect Live Container Logs</h3>
+    <pre><code># Tail all container logs simultaneously
+docker compose -f /opt/spanqc/docker-compose.yml logs -f
+
+# Tail web application logs only
+docker compose -f /opt/spanqc/docker-compose.yml logs -f web
+
+# Tail Python validation engine logs only
+docker compose -f /opt/spanqc/docker-compose.yml logs -f core</code></pre>
+
+    <h3>2. Hot-Deploy Code Updates</h3>
+    <pre><code># On EC2 Host (/opt/spanqc):
+git pull origin main
+docker compose build
+docker compose up -d</code></pre>
+
+    <h3>3. Database Backup & Snapshot</h3>
+    <pre><code># Create safe hot backup of SQLite database while application is live
+docker compose exec web sqlite3 /app/data/dev.db ".backup '/app/data/backup_$(date +%Y%m%d_%H%M%S).db'"
+
+# Copy backup to host filesystem
+docker cp spanqc-web:/app/data/backup_*.db /home/ubuntu/backups/</code></pre>
+
+    <h3>4. System Health & Resource Verification</h3>
+    <pre><code># Verify container CPU and Memory usage
+docker stats --no-stream
+
+# Check systemd cleanup timer status
+systemctl status docker-prune.timer</code></pre>
+
+    <div class="callout success">
+      <div class="callout-title">End of Playbook</div>
+      For emergency support or architecture questions, refer to the source repository at
+      <code>https://github.com/Adhavan07/Spanqc</code> or contact the primary DevOps maintainer.
+    </div>
+  </div>
+
+</body>
+</html>

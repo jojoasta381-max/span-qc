@@ -1,0 +1,40 @@
+---
+# ==============================================================================
+# SpanQC Production Host Provisioning & Application Deployment Playbook
+# ==============================================================================
+- name: Configure SpanQC Production Host & Deploy Microservices Stack
+  hosts: spanqc_servers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Wait for server to become reachable via SSH
+      wait_for_connection:
+        delay: 5
+        timeout: 180
+
+    - name: Gather facts after connection established
+      setup:
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: docker
+      tags: [docker]
+
+    - role: maintenance
+      tags: [maintenance, systemd]
+
+    - role: spanqc_app
+      tags: [app, deploy]
+
+  post_tasks:
+    - name: Print deployment confirmation
+      debug:
+        msg:
+          - "=========================================================="
+          - "SpanQC Microservices Deployment Succeeded!"
+          - "Access Website at: http://{{ ansible_host }}"
+          - "Health: HTTP 200/307 Live"
+          - "=========================================================="

@@ -4,6 +4,8 @@ import { GET as getMeHandler } from "../src/app/api/v1/auth/me/route";
 import { POST as logoutHandler } from "../src/app/api/v1/auth/logout/route";
 import { GET as getOrgHandler } from "../src/app/api/v1/organizations/me/route";
 import { GET as getProjectsHandler, POST as createProjectHandler } from "../src/app/api/v1/projects/route";
+import { POST as googleAuthHandler } from "../src/app/api/v1/auth/google/route";
+import { PATCH as securitySettingsHandler } from "../src/app/api/v1/users/me/security/route";
 import { proxy } from "../src/proxy";
 import { NextRequest } from "next/server";
 import { db } from "../src/lib/server/db";
@@ -876,6 +878,128 @@ async function runTestSuite() {
     assert(dualAuthCsrfRes.status === 403, "Requests with ambient cookie still enforce CSRF even if Bearer is provided");
   }
 
+  // ----------------------------------------------------------------------------
+  // Test 17: Google Authentication, Security Toggle, and Zero-Knowledge Vault Guards
+  // ----------------------------------------------------------------------------
+  console.log("\n[TEST 17] Google Authentication, Security Toggle, and Zero-Knowledge Vault Guards");
+  {
+    // A. Rejects missing credential
+    const emptyGoogleReq = new Request("http://localhost:3000/api/v1/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const emptyGoogleRes = await googleAuthHandler(emptyGoogleReq);
+    assert(emptyGoogleRes.status === 400, "Google auth rejects empty credential with HTTP 400");
+
+    // Helper to generate a test token
+    const makeGoogleTestToken = (payload: { sub: string; email: string; name?: string }) => {
+      const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+      const body = Buffer.from(JSON.stringify({ ...payload, email_verified: true })).toString("base64url");
+      return `${header}.${body}.mock-signature`;
+    };
+
+    // B. Google Login for existing user (linking Google ID)
+    const existingGoogleToken = makeGoogleTestToken({
+      sub: "google-sub-pravin-12345",
+      email: "pravin@spandsons.com",
+      name: "Pravin Sundaram",
+    });
+
+    const existingGoogleReq = new Request("http://localhost:3000/api/v1/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: existingGoogleToken }),
+    });
+    const existingGoogleRes = await googleAuthHandler(existingGoogleReq);
+    assert(existingGoogleRes.status === 200, "Google auth succeeds for existing account (links googleId)");
+    const existingGoogleData = await existingGoogleRes.json();
+    assert(existingGoogleData.user.email === "pravin@spandsons.com", "Identifies correct user account");
+    assert(existingGoogleData.security?.requires_master_password_vault_unlock === true, "Flags Zero-Knowledge Master Password requirement for vault");
+    assert(existingGoogleRes.cookies.get(SESSION_COOKIE_NAME) !== undefined, "Sets secure session cookie");
+
+    // Verify googleId was linked in database
+    const dbPravin = await db.user.findUnique({ where: { email: "pravin@spandsons.com" } });
+    assert(dbPravin?.googleId === "google-sub-pravin-12345", "Database record has linked googleId");
+    assert(dbPravin?.isGoogleAuthEnabled === true, "isGoogleAuthEnabled defaults to true in database");
+
+    // C. User disables Google authentication via Security Settings API
+    const pravinCookie = `${SESSION_COOKIE_NAME}=${existingGoogleRes.cookies.get(SESSION_COOKIE_NAME)!.value}`;
+    const disableGoogleReq = new Request("http://localhost:3000/api/v1/users/me/security", {
+      method: "PATCH",
+      headers: {
+        Cookie: pravinCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isGoogleAuthEnabled: false }),
+    });
+    const disableGoogleRes = await securitySettingsHandler(disableGoogleReq);
+    assert(disableGoogleRes.status === 200, "Security settings endpoint successfully updates isGoogleAuthEnabled to false");
+    const disableData = await disableGoogleRes.json();
+    assert(disableData.is_google_auth_enabled === false, "Returns is_google_auth_enabled: false");
+
+    // Verify database state updated
+    const dbPravinDisabled = await db.user.findUnique({ where: { email: "pravin@spandsons.com" } });
+    assert(dbPravinDisabled?.isGoogleAuthEnabled === false, "Database confirms isGoogleAuthEnabled is now false");
+
+    // D. CRITICAL BACKEND CHECK: Subsequent Google login attempt MUST BE BLOCKED WITH HTTP 403
+    const blockedGoogleReq = new Request("http://localhost:3000/api/v1/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: existingGoogleToken }),
+    });
+    const blockedGoogleRes = await googleAuthHandler(blockedGoogleReq);
+    assert(blockedGoogleRes.status === 403, "CRITICAL: Backend strictly blocks Google authentication when isGoogleAuthEnabled is false (HTTP 403)");
+    const blockedData = await blockedGoogleRes.json();
+    assert(blockedData.code === "GOOGLE_AUTH_DISABLED", "Returns GOOGLE_AUTH_DISABLED error code");
+
+    // E. Verify regular master password sign-in still works normally
+    const normalLoginReq = new Request("http://localhost:3000/api/v1/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "pravin@spandsons.com", password: TEST_PASSWORDS.pravin }),
+    });
+    const normalLoginRes = await loginHandler(normalLoginReq);
+    assert(normalLoginRes.status === 200, "User can still sign in with master password when Google auth is disabled");
+
+    // F. Re-enable Google authentication via Security Settings API
+    const enableGoogleReq = new Request("http://localhost:3000/api/v1/users/me/security", {
+      method: "PATCH",
+      headers: {
+        Cookie: pravinCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isGoogleAuthEnabled: true }),
+    });
+    const enableGoogleRes = await securitySettingsHandler(enableGoogleReq);
+    assert(enableGoogleRes.status === 200, "Security settings endpoint successfully re-enables isGoogleAuthEnabled");
+
+    // G. Google login succeeds again after re-enabling
+    const reallowedGoogleReq = new Request("http://localhost:3000/api/v1/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: existingGoogleToken }),
+    });
+    const reallowedGoogleRes = await googleAuthHandler(reallowedGoogleReq);
+    assert(reallowedGoogleRes.status === 200, "Google login succeeds again once re-enabled");
+
+    // H. New user registration via Google creates Tenant and User
+    const newGoogleToken = makeGoogleTestToken({
+      sub: `google-new-user-${Date.now()}`,
+      email: `engineer-${Date.now()}@google-domain.test`,
+      name: "New Google Engineer",
+    });
+    const newGoogleReq = new Request("http://localhost:3000/api/v1/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: newGoogleToken }),
+    });
+    const newGoogleRes = await googleAuthHandler(newGoogleReq);
+    assert(newGoogleRes.status === 200, "First-time Google user is provisioned with tenant and user account");
+    const newGoogleData = await newGoogleRes.json();
+    assert(newGoogleData.user.is_google_auth_enabled === true, "New Google user defaults to is_google_auth_enabled: true");
+    assert(newGoogleData.security.requires_master_password_vault_unlock === true, "New user requires Zero-Knowledge master password for vault decryption");
+  }
 
   console.log("\n================================================================================");
   console.log(`TEST SUITE COMPLETE: ${passedCount} PASSED, ${failedCount} FAILED`);

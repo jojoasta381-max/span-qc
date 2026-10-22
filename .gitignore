@@ -48,3 +48,19 @@ __pycache__/
 
 # private document storage
 /storage/
+
+# agent & internal assistant documentation
+AGENTS.md
+CLAUDE.md
+SPANQC_AGENT_CONTEXT.md
+SPANQC_ARCHITECTURE_AND_HISTORY*
+
+# experiments directory
+/experiments/
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+

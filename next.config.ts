@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactStrictMode: true,
+  experimental: {
+    proxyClientMaxBodySize: "100mb",
+  },
   async rewrites() {
     const backendUrl = process.env.BACKEND_API_URL;
     if (!backendUrl) {
